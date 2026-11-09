@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>זירת הנחשים - Snake IO Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Rubik', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        body {
+            background-color: #090d16;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* Pulse glow animation */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .pulse-btn {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative flex items-center justify-center text-white">
+
+    <!-- GAME CANVAS -->
+    <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-0"></canvas>
+
+    <!-- UI OVERLAY: HUD -->
+    <div id="hudOverlay" class="absolute inset-0 pointer-events-none z-10 hidden flex flex-col justify-between p-4 sm:p-6">
+        
+        <!-- Top Bar: Leaderboard & Player Stats -->
+        <div class="flex justify-between items-start w-full">
+            
+            <!-- Player Live Stats -->
+            <div class="bg-slate-900/80 backdrop-blur-md border border-slate-700/80 rounded-2xl p-3 sm:p-4 shadow-xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 flex items-center justify-center text-2xl shadow-inner font-black">
+                    🐍
+                </div>
+                <div>
+                    <div class="text-xs text-slate-400 font-bold">הניקוד שלך</div>
+                    <div class="text-2xl sm:text-3xl font-black text-amber-400 leading-none" id="playerScoreDisplay">0</div>
+                    <div class="text-[11px] text-emerald-400 font-semibold mt-1">אורך: <span id="playerLengthDisplay">10</span> מטרים</div>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-2xl p-3 sm:p-4 shadow-xl min-w-[180px] sm:min-w-[220px]">
+                <h3 class="text-xs font-black text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1 border-b border-slate-800 pb-1">
+                    🏆 טבלת המוליכים
+                </h3>
+                <ol id="leaderboardList" class="space-y-1 text-xs font-bold">
+                    <!-- Populated dynamically -->
+                </ol>
+            </div>
+        </div>
+
+        <!-- Center Notification Log (Kills & Messages) -->
+        <div id="killLog" class="self-center text-center space-y-1 transition-all pointer-events-none"></div>
+
+        <!-- Bottom Bar: Controls hint & Mini Map -->
+        <div class="flex justify-between items-end w-full">
+            
+            <!-- Controls Hint -->
+            <div class="bg-slate-900/75 backdrop-blur-sm border border-slate-800 rounded-xl p-3 text-xs text-slate-300 hidden sm:block">
+                <p>🖱️ <b>היגוי:</b> הזז את העכבר כיוון הנסיעה</p>
+                <p>⚡ <b>טורבו האצה:</b> לחיצה ארוכה על מקש רווח או עכבר שמאלי</p>
+                <p>👑 <b>כלל הזירה:</b> אכול נקודות ונחשים קטנים ממך!</p>
+            </div>
+
+            <!-- Mobile Touch Boost Button -->
+            <div class="pointer-events-auto sm:hidden">
+                <button id="touchBoostBtn" class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 text-slate-950 font-black text-xs flex items-center justify-center border-2 border-yellow-300 shadow-2xl active:scale-90 transition">
+                    ⚡<br>טורבו
+                </button>
+            </div>
+
+            <!-- Mini Map Canvas -->
+            <div class="relative bg-slate-900/90 border-2 border-slate-700 rounded-2xl overflow-hidden shadow-2xl p-1">
+                <canvas id="miniMapCanvas" width="120" height="120" class="rounded-xl"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- START & RESTART OVERLAY SCREEN -->
+    <div id="menuScreen" class="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-20 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center relative overflow-hidden">
+            <!-- Glow background decor -->
+            <div class="absolute -top-20 -left-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-20 -right-20 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+            <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-tr from-emerald-500 via-teal-500 to-amber-500 rounded-3xl flex items-center justify-center text-4xl shadow-xl shadow-emerald-500/20 pulse-btn border-2 border-emerald-400">
+                🐉
+            </div>
+
+            <h1 class="text-3xl sm:text-4xl font-black bg-gradient-to-r from-emerald-400 via-amber-400 to-orange-500 bg-clip-text text-transparent">
+                זירת הנחשים
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1 mb-6">
+                אכול נקודות אור, גדל בלתי עציר וטרוף נחשים קטנים ממך!
+            </p>
+
+            <div class="space-y-4 mb-6">
+                <div class="text-right">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 mr-1">שם הנחש שלך:</label>
+                    <input type="text" id="playerNameInput" value="נחש המחץ" maxlength="14" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-amber-400 transition text-center">
+                </div>
+
+                <div class="text-right">
+                    <label class="block text-xs font-bold text-slate-300 mb-1 mr-1">בחר צבע עור:</label>
+                    <div class="flex justify-center gap-3" id="colorPickerContainer">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Rules Summary -->
+            <div class="bg-slate-955/70 border border-slate-800 rounded-2xl p-3 text-right text-xs text-slate-300 mb-6 space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400">✨</span>
+                    <span>אכול נקודות אור מפוזרות כדי לגדול ולהעלות ניקוד.</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-emerald-400">⚔️</span>
+                    <span><b>חוק האכילה:</b> טרף והריגה מתרחשים אך ורק במפגש ראש בראש! הנחש הגדול מביניהם מנצח.</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-blue-400">🏷️</span>
+                    <span>מעל כל נחש מוצג מספר הנקודות המדויק שלו.</span>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 font-black text-lg py-3.5 rounded-2xl shadow-xl shadow-emerald-500/20 transition duration-200">
+                🚀 התחל קרב!
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME ENGINE CODE -->
+    <script>
+        /* ==========================================================================
+           1. CONFIGURATION & GAME CONSTANTS
+           ========================================================================== */
+        const WORLD_SIZE = 3200;       // Arena width & height (pixels)
+        const INITIAL_FOOD_COUNT = 600; // Total light dots on map
+        const BOT_COUNT = 14;           // Number of AI Snakes in arena
+        const BASE_SPEED = 3.6;         // Default movement speed
+        const BOOST_SPEED = 7.0;        // Fast speed during boost
+
+        const COLOR_SKINS = [
+            { id: 'emerald', name: 'ירוק זוהר', head: '#10b981', body: '#059669', glow: '#34d399' },
+            { id: 'amber', name: 'זהב אש', head: '#f59e0b', body: '#d97706', glow: '#fbbf24' },
+            { id: 'cyan', name: 'טורקיז חשמלי', head: '#06b6d4', body: '#0891b2', glow: '#22d3ee' },
+            { id: 'rose', name: 'ורוד ניאון', head: '#f43f5e', body: '#e11d48', glow: '#fb7185' },
+            { id: 'purple', name: 'סגול סערה', head: '#a855f7', body: '#7e22ce', glow: '#c084fc' }
+        ];
+
+        const BOT_NAMES = [
+            "דרקון האש", "קוברה שחורה", "פיתון הברק", "שרדר 3000",
+            "נחש הניאון", "ווייפר מהיר", "אלפא סנייק", "מאמבה",
+            "אנפילד", "זאוס", "טיטאן", "אנקונדה", "צלם הלילה", "טורפדו"
+        ];
+
+        /* ==========================================================================
+           2. CANVAS & GLOBAL VARIABLES SETUP
+           ========================================================================== */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const miniMapCanvas = document.getElementById('miniMapCanvas');
+        const miniCtx = miniMapCanvas.getContext('2d');
+
+        let selectedSkin = COLOR_SKINS[0];
+        let camera = { x: WORLD_SIZE / 2, y: WORLD_SIZE / 2 };
+        let mousePos = { x: 0, y: 0 };
+        let isBoosting = false;
+        let gameRunning = false;
+        let animationFrameId = null;
+
+        let playerSnake = null;
+        let snakes = [];
+        let foods = [];
+
+        // Sound Audio Context setup
+        let audioCtx = null;
+        function playSound(type) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'eat') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(850, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'kill') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.setValueAtTime(500, now + 0.1);
+                    osc.frequency.setValueAtTime(750, now + 0.2);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'die') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(280, now);
+                    osc.frequency.exponentialRampToValueAtTime(60, now + 0.3);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch(e) {}
+        }
+
+        /* Resize Handler */
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            mousePos.x = canvas.width / 2;
+            mousePos.y = canvas.height / 2;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        /* Color Skin UI Selector */
+        function initColorPicker() {
+            const container = document.getElementById('colorPickerContainer');
+            container.innerHTML = '';
+            COLOR_SKINS.forEach(skin => {
+                const btn = document.createElement('div');
+                btn.className = `w-9 h-9 rounded-full cursor-pointer transition transform hover:scale-110 border-2 ${selectedSkin.id === skin.id ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-70'}`;
+                btn.style.backgroundColor = skin.head;
+                btn.title = skin.name;
+                btn.onclick = () => {
+                    selectedSkin = skin;
+                    initColorPicker();
+                };
+                container.appendChild(btn);
+            });
+        }
+        initColorPicker();
+
+        /* ==========================================================================
+           3. ENTITY CLASSES (SNAKE & FOOD)
+           ========================================================================== */
+        class Food {
+            constructor(x, y, value = 1, isCluster = false) {
+                this.x = x || Math.random() * (WORLD_SIZE - 100) + 50;
+                this.y = y || Math.random() * (WORLD_SIZE - 100) + 50;
+                this.value = value; // Points & size growth
+                this.radius = Math.min(14, 3.5 + Math.sqrt(value) * 1.5);
+                
+                // Random vibrant colors for dots
+                const colors = ['#f59e0b', '#10b981', '#06b6d4', '#f43f5e', '#a855f7', '#3b82f6', '#eab308'];
+                this.color = isCluster ? '#facc15' : colors[Math.floor(Math.random() * colors.length)];
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+
+            draw() {
+                this.pulsePhase += 0.05;
+                const animatedRadius = this.radius + Math.sin(this.pulsePhase) * 0.8;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.max(1, animatedRadius), 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Snake {
+            constructor(id, name, skin, isBot = false, startX, startY) {
+                this.id = id;
+                this.name = name;
+                this.skin = skin;
+                this.isBot = isBot;
+
+                this.score = 25; // Initial score
+                this.x = startX || Math.random() * (WORLD_SIZE - 400) + 200;
+                this.y = startY || Math.random() * (WORLD_SIZE - 400) + 200;
+                this.angle = Math.random() * Math.PI * 2;
+                this.targetAngle = this.angle;
+                
+                this.segments = [];
+                this.segmentSpacing = 6;
+                this.isAlive = true;
+
+                // AI Bot state parameters
+                this.aiTarget = null;
+                this.aiTimer = 0;
+
+                // Init initial body segments
+                const initialLength = this.getCalculatedLength();
+                for (let i = 0; i < initialLength; i++) {
+                    this.segments.push({
+                        x: this.x - Math.cos(this.angle) * (i * this.segmentSpacing),
+                        y: this.y - Math.sin(this.angle) * (i * this.segmentSpacing)
+                    });
+                }
+            }
+
+            getThickness() {
+                // Thickness scales smoothly with points
+                return Math.min(38, 10 + Math.sqrt(this.score) * 1.2);
+            }
+
+            getCalculatedLength() {
+                return Math.floor(15 + Math.sqrt(this.score) * 4);
+            }
+
+            update() {
+                if (!this.isAlive) return;
+
+                // 1. Determine Movement Direction & Speed
+                let currentSpeed = BASE_SPEED;
+                let boosting = false;
+
+                if (this.isBot) {
+                    this.updateAI();
+                } else {
+                    // Player direction relative to screen center
+                    const dx = mousePos.x - canvas.width / 2;
+                    const dy = mousePos.y - canvas.height / 2;
+                    if (Math.hypot(dx, dy) > 20) {
+                        this.targetAngle = Math.atan2(dy, dx);
+                    }
+                    boosting = isBoosting && this.score > 15;
+                }
+
+                if (boosting) {
+                    currentSpeed = BOOST_SPEED;
+                    this.score = Math.max(10, this.score - 0.08); // Slight score cost for turbo boost
+                    
+                    // Spawn boost trail food occasionally
+                    if (Math.random() < 0.25) {
+                        const tail = this.segments[this.segments.length - 1];
+                        foods.push(new Food(tail.x + (Math.random() - 0.5) * 10, tail.y + (Math.random() - 0.5) * 10, 0.5));
+                    }
+                }
+
+                // Smooth rotation turning rate
+                let angleDiff = this.targetAngle - this.angle;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                this.angle += angleDiff * 0.12;
+
+                // 2. Move Head Position
+                this.x += Math.cos(this.angle) * currentSpeed;
+                this.y += Math.sin(this.angle) * currentSpeed;
+
+                // Bound inside Arena Walls
+                const margin = this.getThickness();
+                this.x = Math.max(margin, Math.min(WORLD_SIZE - margin, this.x));
+                this.y = Math.max(margin, Math.min(WORLD_SIZE - margin, this.y));
+
+                // Update head of body segment
+                this.segments[0] = { x: this.x, y: this.y };
+
+                // 3. Update Body Segments to follow head smoothly
+                const targetLength = this.getCalculatedLength();
+                
+                // Adjust array size if snake grew or shrank
+                while (this.segments.length < targetLength) {
+                    const last = this.segments[this.segments.length - 1];
+                    this.segments.push({ x: last.x, y: last.y });
+                }
+                if (this.segments.length > targetLength) {
+                    this.segments.length = targetLength;
+                }
+
+                const spacing = this.getThickness() * 0.45;
+                for (let i = 1; i < this.segments.length; i++) {
+                    const prev = this.segments[i - 1];
+                    const curr = this.segments[i];
+                    const dist = Math.hypot(prev.x - curr.x, prev.y - curr.y);
+
+                    if (dist > spacing) {
+                        const segAngle = Math.atan2(prev.y - curr.y, prev.x - curr.x);
+                        curr.x = prev.x - Math.cos(segAngle) * spacing;
+                        curr.y = prev.y - Math.sin(segAngle) * spacing;
+                    }
+                }
+            }
+
+            /* AI Bot Logic: Hunts food, chases smaller snakes, avoids bigger snakes */
+            updateAI() {
+                this.aiTimer++;
+                
+                // Periodically scan surroundings for targets
+                if (this.aiTimer % 15 === 0 || !this.aiTarget) {
+                    let nearestDanger = null;
+                    let dangerDist = 280;
+
+                    let nearestPrey = null;
+                    let preyDist = 220;
+
+                    // Scan other snakes
+                    snakes.forEach(other => {
+                        if (other === this || !other.isAlive) return;
+
+                        const d = Math.hypot(other.x - this.x, other.y - this.y);
+                        if (other.score > this.score * 1.15 && d < dangerDist) {
+                            dangerDist = d;
+                            nearestDanger = other;
+                        } else if (other.score < this.score * 0.85 && d < preyDist) {
+                            preyDist = d;
+                            nearestPrey = other;
+                        }
+                    });
+
+                    // 1. Priority 1: Flee from larger snakes
+                    if (nearestDanger) {
+                        const fleeAngle = Math.atan2(this.y - nearestDanger.y, this.x - nearestDanger.x);
+                        this.targetAngle = fleeAngle + (Math.random() - 0.5) * 0.4;
+                        return;
+                    }
+
+                    // 2. Priority 2: Hunt smaller snakes
+                    if (nearestPrey) {
+                        this.targetAngle = Math.atan2(nearestPrey.y - this.y, nearestPrey.x - this.x);
+                        return;
+                    }
+
+                    // 3. Priority 3: Find nearest glowing food dot
+                    let nearestFood = null;
+                    let minFoodDist = 350;
+                    foods.forEach(f => {
+                        const fd = Math.hypot(f.x - this.x, f.y - this.y);
+                        if (fd < minFoodDist) {
+                            minFoodDist = fd;
+                            nearestFood = f;
+                        }
+                    });
+
+                    if (nearestFood) {
+                        this.targetAngle = Math.atan2(nearestFood.y - this.y, nearestFood.x - this.x);
+                    } else if (Math.random() < 0.1) {
+                        // Random wander angle
+                        this.targetAngle += (Math.random() - 0.5) * 1.5;
+                    }
+                }
+            }
+
+            draw() {
+                if (!this.isAlive) return;
+
+                const thickness = this.getThickness();
+
+                ctx.save();
+
+                // 1. Draw Body Segments (Back to front)
+                for (let i = this.segments.length - 1; i >= 0; i--) {
+                    const seg = this.segments[i];
+                    const scaleRatio = 1 - (i / this.segments.length) * 0.25; // Slight taper at tail
+                    const radius = (thickness / 2) * scaleRatio;
+
+                    ctx.beginPath();
+                    ctx.arc(seg.x, seg.y, Math.max(2, radius), 0, Math.PI * 2);
+                    
+                    if (i === 0) {
+                        ctx.fillStyle = this.skin.head;
+                    } else {
+                        ctx.fillStyle = (i % 2 === 0) ? this.skin.head : this.skin.body;
+                    }
+                    ctx.fill();
+                }
+
+                // 2. Draw Snake Eyes on Head Segment
+                const head = this.segments[0];
+                const eyeOffset = thickness * 0.35;
+                const eyeRadius = Math.max(2, thickness * 0.22);
+                const pupilRadius = Math.max(1, eyeRadius * 0.5);
+
+                const leftEyeX = head.x + Math.cos(this.angle - Math.PI / 4) * eyeOffset;
+                const leftEyeY = head.y + Math.sin(this.angle - Math.PI / 4) * eyeOffset;
+                const rightEyeX = head.x + Math.cos(this.angle + Math.PI / 4) * eyeOffset;
+                const rightEyeY = head.y + Math.sin(this.angle + Math.PI / 4) * eyeOffset;
+
+                // White of Eyes
+                ctx.beginPath();
+                ctx.arc(leftEyeX, leftEyeY, eyeRadius, 0, Math.PI * 2);
+                ctx.arc(rightEyeX, rightEyeY, eyeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                // Black Pupils
+                ctx.beginPath();
+                ctx.arc(leftEyeX + Math.cos(this.angle)*1.2, leftEyeY + Math.sin(this.angle)*1.2, pupilRadius, 0, Math.PI * 2);
+                ctx.arc(rightEyeX + Math.cos(this.angle)*1.2, rightEyeY + Math.sin(this.angle)*1.2, pupilRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#000000';
+                ctx.fill();
+
+                // 3. MANDATORY FEATURE: Overhead Score Tag Badge
+                const overheadY = head.y - thickness - 16;
+                const scoreText = `${this.name} (${Math.floor(this.score)})`;
+
+                ctx.font = 'bold 12px Rubik, sans-serif';
+                const textWidth = ctx.measureText(scoreText).width;
+
+                // Badge background pill
+                ctx.beginPath();
+                ctx.roundRect(head.x - textWidth / 2 - 8, overheadY - 12, textWidth + 16, 20, 10);
+                ctx.fillStyle = this.isBot ? 'rgba(15, 23, 42, 0.85)' : 'rgba(217, 119, 6, 0.95)';
+                ctx.strokeStyle = this.skin.glow;
+                ctx.lineWidth = 1.5;
+                ctx.fill();
+                ctx.stroke();
+
+                // Text inside badge
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(scoreText, head.x, overheadY - 1);
+
+                ctx.restore();
+            }
+        }
+
+        /* ==========================================================================
+           4. GAME SPONSORSHIP & COLLISION LOGIC
+           ========================================================================== */
+        function spawnInitialEntities() {
+            foods = [];
+            snakes = [];
+
+            // Spawn Food Dots
+            for (let i = 0; i < INITIAL_FOOD_COUNT; i++) {
+                foods.push(new Food());
+            }
+
+            // Spawn Player Snake
+            playerSnake = new Snake('player', document.getElementById('playerNameInput').value || 'נחש המחץ', selectedSkin, false);
+            snakes.push(playerSnake);
+
+            // Spawn AI Bot Snakes
+            for (let i = 0; i < BOT_COUNT; i++) {
+                const randomSkin = COLOR_SKINS[i % COLOR_SKINS.length];
+                const botName = BOT_NAMES[i % BOT_NAMES.length];
+                const bot = new Snake(`bot_${i}`, botName, randomSkin, true);
+                
+                // Give bots initial varied scores
+                bot.score = Math.floor(Math.random() * 80) + 20;
+                snakes.push(bot);
+            }
+        }
+
+        /* Explode snake into shiny food dots when killed */
+        function killSnake(victim, killer) {
+            victim.isAlive = false;
+
+            // Convert victim body segments into shiny food dots
+            victim.segments.forEach((seg, idx) => {
+                if (idx % 2 === 0) {
+                    const value = Math.max(1.5, victim.score / victim.segments.length * 1.8);
+                    foods.push(new Food(
+                        seg.x + (Math.random() - 0.5) * 20, 
+                        seg.y + (Math.random() - 0.5) * 20, 
+                        value, 
+                        true
+                    ));
+                }
+            });
+
+            // Process Kill (Notifications removed as requested)
+            if (killer) {
+                killer.score += Math.floor(victim.score * 0.4); // Reward killer with portion of score
+                if (killer === playerSnake) playSound('kill');
+            }
+
+            if (victim === playerSnake) {
+                playSound('die');
+                setTimeout(() => {
+                    endGameScreen();
+                }, 1200);
+            } else {
+                // Respawn bot after a short delay
+                setTimeout(() => {
+                    if (gameRunning) {
+                        const randomSkin = COLOR_SKINS[Math.floor(Math.random() * COLOR_SKINS.length)];
+                        const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+                        const newBot = new Snake(`bot_${Date.now()}`, botName, randomSkin, true);
+                        newBot.score = Math.floor(Math.random() * 40) + 20;
+                        snakes.push(newBot);
+                    }
+                }, 3000);
+            }
+        }
+
+        function checkCollisions() {
+            // 1. Food Collision Checking
+            snakes.forEach(snake => {
+                if (!snake.isAlive) return;
+
+                const head = snake.segments[0];
+                const eatRadius = snake.getThickness() * 0.8;
+
+                for (let i = foods.length - 1; i >= 0; i--) {
+                    const f = foods[i];
+                    const dist = Math.hypot(head.x - f.x, head.y - f.y);
+
+                    if (dist < eatRadius + f.radius) {
+                        snake.score += f.value;
+                        if (snake === playerSnake) playSound('eat');
+                        foods.splice(i, 1);
+
+                        // Keep food count topped up
+                        if (foods.length < INITIAL_FOOD_COUNT) {
+                            foods.push(new Food());
+                        }
+                    }
+                }
+            });
+
+            // 2. Snake vs Snake Eating & Collision Logic (Head-to-Head ONLY)
+            for (let i = 0; i < snakes.length; i++) {
+                const snakeA = snakes[i];
+                if (!snakeA.isAlive) continue;
+
+                const headA = snakeA.segments[0];
+                const radiusA = snakeA.getThickness() / 2;
+
+                for (let j = i + 1; j < snakes.length; j++) {
+                    const snakeB = snakes[j];
+                    if (!snakeB.isAlive) continue;
+
+                    const headB = snakeB.segments[0];
+                    const radiusB = snakeB.getThickness() / 2;
+                    const dist = Math.hypot(headA.x - headB.x, headA.y - headB.y);
+
+                    // EATING RULE: Only triggers when heads collide directly (head-on)!
+                    if (dist < (radiusA + radiusB) * 0.85) {
+                        if (snakeA.score > snakeB.score) {
+                            killSnake(snakeB, snakeA);
+                        } else if (snakeB.score > snakeA.score) {
+                            killSnake(snakeA, snakeB);
+                        } else {
+                            // Equal score tie-breaker
+                            killSnake(snakeB, snakeA);
+                        }
+                    }
+                }
+            }
+        }
+
+        /* ==========================================================================
+           5. RENDERING PIPELINE & HUD UPDATES
+           ========================================================================== */
+        function drawGridBackground() {
+            const gridSize = 80;
+            const startX = Math.floor((camera.x - canvas.width / 2) / gridSize) * gridSize;
+            const endX = startX + canvas.width + gridSize * 2;
+            const startY = Math.floor((camera.y - canvas.height / 2) / gridSize) * gridSize;
+            const endY = startY + canvas.height + gridSize * 2;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+            ctx.lineWidth = 1;
+
+            for (let x = startX; x < endX; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, startY);
+                ctx.lineTo(x, endY);
+                ctx.stroke();
+            }
+
+            for (let y = startY; y < endY; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(startX, y);
+                ctx.lineTo(endX, y);
+                ctx.stroke();
+            }
+
+            // Arena Red Boundary Box
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 8;
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 20;
+            ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
+
+            ctx.restore();
+        }
+
+        function renderMiniMap() {
+            miniCtx.clearRect(0, 0, miniMapCanvas.width, miniMapCanvas.height);
+            const scale = miniMapCanvas.width / WORLD_SIZE;
+
+            // Draw snakes on mini map
+            snakes.forEach(s => {
+                if (!s.isAlive) return;
+                miniCtx.beginPath();
+                miniCtx.arc(s.x * scale, s.y * scale, s === playerSnake ? 3.5 : 2, 0, Math.PI * 2);
+                miniCtx.fillStyle = s === playerSnake ? '#f59e0b' : '#38bdf8';
+                miniCtx.fill();
+            });
+        }
+
+        function updateHUD() {
+            if (!playerSnake) return;
+
+            document.getElementById('playerScoreDisplay').textContent = Math.floor(playerSnake.score);
+            document.getElementById('playerLengthDisplay').textContent = playerSnake.getCalculatedLength();
+
+            // Render Leaderboard Top 5
+            const sorted = [...snakes].filter(s => s.isAlive).sort((a, b) => b.score - a.score);
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+
+            sorted.slice(0, 5).forEach((s, idx) => {
+                const li = document.createElement('li');
+                li.className = `flex justify-between items-center ${s === playerSnake ? 'text-amber-400 font-black' : 'text-slate-300'}`;
+                li.innerHTML = `
+                    <span>${idx + 1}. ${s.name}</span>
+                    <span class="text-slate-400">${Math.floor(s.score)}</span>
+                `;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        function showKillMessage(htmlMsg) {
+            // Kill notifications hidden completely
+            return;
+        }
+
+        /* ==========================================================================
+           6. MAIN GAME LOOP
+           ========================================================================== */
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            // Clean active snakes array
+            snakes = snakes.filter(s => s.isAlive);
+
+            // Update Snakes
+            snakes.forEach(s => s.update());
+
+            // Check Collisions
+            checkCollisions();
+
+            // Update Camera to smoothly track player snake head
+            if (playerSnake && playerSnake.isAlive) {
+                camera.x += (playerSnake.x - camera.x) * 0.1;
+                camera.y += (playerSnake.y - camera.y) * 0.1;
+            }
+
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Render World Scene with Camera Transform
+            ctx.save();
+            ctx.translate(canvas.width / 2 - camera.x, canvas.height / 2 - camera.y);
+
+            // 1. Draw Arena Grid & Boundaries
+            drawGridBackground();
+
+            // 2. Draw Food Light Dots
+            foods.forEach(f => f.draw());
+
+            // 3. Draw Snakes
+            snakes.forEach(s => s.draw());
+
+            ctx.restore();
+
+            // Render HUD & MiniMap
+            updateHUD();
+            renderMiniMap();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        /* ==========================================================================
+           7. GAME INPUT & LIFECYCLE CONTROLLERS
+           ========================================================================== */
+        function startGame() {
+            document.getElementById('menuScreen').classList.add('hidden');
+            document.getElementById('hudOverlay').classList.remove('hidden');
+
+            spawnInitialEntities();
+            gameRunning = true;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            gameLoop();
+        }
+
+        function endGameScreen() {
+            gameRunning = false;
+            document.getElementById('hudOverlay').classList.add('hidden');
+            document.getElementById('menuScreen').classList.remove('hidden');
+        }
+
+        /* Event Listeners for Controls */
+        window.addEventListener('mousemove', (e) => {
+            mousePos.x = e.clientX;
+            mousePos.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', () => { isBoosting = true; });
+        window.addEventListener('mouseup', () => { isBoosting = false; });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.key === 'Shift') isBoosting = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' || e.key === 'Shift') isBoosting = false;
+        });
+
+        // Touch Control handling for mobile screens
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                mousePos.x = e.touches[0].clientX;
+                mousePos.y = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        const boostBtn = document.getElementById('touchBoostBtn');
+        boostBtn.addEventListener('touchstart', (e) => { e.preventDefault(); isBoosting = true; });
+        boostBtn.addEventListener('touchend', (e) => { e.preventDefault(); isBoosting = false; });
+    </script>
+</body>
+</html>
