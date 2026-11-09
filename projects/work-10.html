@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מפרטי רכבי שטח - מסננים מורחבים</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 font-sans min-h-screen text-slate-800 p-4 md:p-8">
+
+    <main class="max-w-7xl mx-auto space-y-6">
+        <!-- Header -->
+        <header class="bg-slate-900 text-white p-6 rounded-2xl shadow-md">
+            <h1 class="text-2xl md:text-3xl font-extrabold text-amber-400 mb-2">
+                <i class="fa-solid fa-truck-monster ml-2"></i>קטלוג ומפרט רכבי שטח (4x4)
+            </h1>
+            <p class="text-xs md:text-sm text-slate-300">סנן וערוך מפרטי שטח טכניים, זוויות מעבר, מרווח גחון ומערכות הנעה.</p>
+        </header>
+
+        <!-- Extended Filter Bar -->
+        <section class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h2 class="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2">
+                    <i class="fa-solid fa-filter text-amber-500"></i> מסנני חיפוש מתקדמים
+                </h2>
+                <button onclick="resetFilters()" class="text-xs text-amber-600 hover:text-amber-700 font-bold flex items-center gap-1 transition">
+                    <i class="fa-solid fa-rotate-right"></i> איפוס כל המסננים
+                </button>
+            </div>
+
+            <!-- Filter Controls Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search Text -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">חיפוש חופשי</label>
+                    <div class="relative">
+                        <input type="text" id="search-input" oninput="renderVehicles()" placeholder="שם דגם או יצרן..." 
+                               class="w-full pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Make Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">יצרן</label>
+                    <select id="filter-make" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">כל היצרנים</option>
+                    </select>
+                </div>
+
+                <!-- Max Price -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">מחיר מקסימלי (₪)</label>
+                    <select id="filter-price" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">ללא הגבלה</option>
+                        <option value="50000">עד ₪50,000</option>
+                        <option value="100000">עד ₪100,000</option>
+                        <option value="150000">עד ₪150,000</option>
+                        <option value="200000">עד ₪200,000</option>
+                        <option value="300000">עד ₪300,000</option>
+                    </select>
+                </div>
+
+                <!-- Max KM -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">קילומטראז' מקסימלי</label>
+                    <select id="filter-km" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">ללא הגבלה</option>
+                        <option value="50000">עד 50,000 ק"מ</option>
+                        <option value="100000">עד 100,000 ק"מ</option>
+                        <option value="150000">עד 150,000 ק"מ</option>
+                        <option value="200000">עד 200,000 ק"מ</option>
+                    </select>
+                </div>
+
+                <!-- Year -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">שנת ייצור</label>
+                    <select id="filter-year" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">כל השנים</option>
+                    </select>
+                </div>
+
+                <!-- Min Ground Clearance -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">מרווח גחון מינימלי (ס"מ)</label>
+                    <select id="filter-clearance" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">כל גובה</option>
+                        <option value="19">לפחות 19 ס"מ</option>
+                        <option value="21">לפחות 21 ס"מ</option>
+                        <option value="23">לפחות 23 ס"מ</option>
+                        <option value="25">לפחות 25 ס"מ</option>
+                        <option value="27">לפחות 27 ס"מ</option>
+                    </select>
+                </div>
+
+                <!-- Min Approach Angle -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">זווית גישה מינימלית (°)</label>
+                    <select id="filter-approach" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">כל זווית</option>
+                        <option value="25">לפחות 25°</option>
+                        <option value="30">לפחות 30°</option>
+                        <option value="35">לפחות 35°</option>
+                        <option value="40">לפחות 40°</option>
+                    </select>
+                </div>
+
+                <!-- Drivetrain -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">סוג הנעה</label>
+                    <select id="filter-drivetrain" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">הכל</option>
+                        <option value="Low">כולל הילוך כוח (Low)</option>
+                        <option value="קבוע">4x4 קבוע</option>
+                        <option value="חלקית">4x4 חלקית</option>
+                    </select>
+                </div>
+
+                <!-- Diff Locks Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">נעילות דיפרנציאל</label>
+                    <select id="filter-locks" onchange="renderVehicles()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="">הכל</option>
+                        <option value="חשמלית">נעילה חשמלית/אחורית</option>
+                        <option value="מרכזית">נעילה מרכזית</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Counter -->
+        <div class="flex flex-wrap items-center justify-between text-xs text-slate-500 bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
+            <div>
+                נמצאו <span id="results-count" class="font-bold text-amber-600 text-sm">0</span> דגמי שטח מתאימים
+            </div>
+            <div class="text-slate-400">
+                * לחץ על רכב לצפייה במפרט הטכני המלא והיתרונות
+            </div>
+        </div>
+
+        <!-- Vehicles Grid -->
+        <div id="vehicles-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Cards dynamically rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200 shadow-sm mt-6">
+            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 text-2xl">
+                <i class="fa-solid fa-car-tunnel"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">לא נמצאו רכבי שטח מתאימים</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto mb-4">נסה לשנות את קריטריוני הסינון או לנקות את שורת החיפוש</p>
+            <button onclick="resetFilters()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold rounded-xl transition shadow-sm">
+                איפוס מסננים
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal Modal Details -->
+    <div id="vehicle-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 relative">
+            <button onclick="closeModal()" class="absolute top-4 left-4 w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="modal-content">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultVehicles = [
+            {
+                id: 1,
+                make_model: "טויוטה לנד קרוזר פראדו (2024)",
+                make: "טויוטה",
+                years: "2024",
+                estimated_price: 360000,
+                mileage: 15000,
+                ground_clearance: 22.5,
+                approach_angle: 32,
+                departure_angle: 26,
+                breakover_angle: 22,
+                wading_depth: 70,
+                towing_capacity: 3500,
+                fuel_economy: "10.2 ק\"מ/ליטר",
+                km_per_liter: 10.2,
+                engine_spec: "2.8L Turbo Diesel (204 כ\"ס)",
+                drivetrain: "4x4 קבוע + הילוך כוח (Low)",
+                front_axle: "מתלים נפרדים (IFS)",
+                rear_axle: "סרן חי",
+                diff_locks: "נעילה מרכזית + נעילת דיפרנציאל אחורית (A-TRAC)",
+                pros_cons: "אמינות חסרת תקדים, שמירת ערך מטורפת בשוק הישראלי, עבירות מצוינת.",
+                vulnerabilities: "מערכת אגוז מוגנת, בולמים מקוריים רכים מדי לשטח טכני.",
+                image: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                id: 2,
+                make_model: "סוזוקי ג'ימני (2023)",
+                make: "סוזוקי",
+                years: "2023",
+                estimated_price: 145000,
+                mileage: 28000,
+                ground_clearance: 21.0,
+                approach_angle: 37,
+                departure_angle: 49,
+                breakover_angle: 28,
+                wading_depth: 35,
+                towing_capacity: 1300,
+                fuel_economy: "13.5 ק\"מ/ליטר",
+                km_per_liter: 13.5,
+                engine_spec: "1.5L בנזין (102 כ\"ס)",
+                drivetrain: "4x4 חלקית + הילוך כוח (Low)",
+                front_axle: "סרן חי",
+                rear_axle: "סרן חי",
+                diff_locks: "בקרת אחיזה אלקטרונית (תמיכה בנעילת בלימה)",
+                pros_cons: "זריז וקל משקל, קל לשיפורים, כושר עבירות ענקי בזכות שסי סולם וזוויות מעבר.",
+                vulnerabilities: "מנוע צנוע בכביש מהיר, נפח תא מטען זעיר.",
+                image: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                id: 3,
+                make_model: "ג'יפ רנגלר רוביקון (2022)",
+                make: "ג'יפ",
+                years: "2022",
+                estimated_price: 310000,
+                mileage: 42000,
+                ground_clearance: 27.4,
+                approach_angle: 44,
+                departure_angle: 37,
+                breakover_angle: 27.8,
+                wading_depth: 76,
+                towing_capacity: 2495,
+                fuel_economy: "9.2 ק\"מ/ליטר",
+                km_per_liter: 9.2,
+                engine_spec: "2.0L Turbo בנזין (272 כ\"ס)",
+                drivetrain: "4x4 חלקית + Low ביחס העברה 4:1",
+                front_axle: "סרן חי (Dana 44 HD)",
+                rear_axle: "סרן חי (Dana 44 HD)",
+                diff_locks: "נעילה חשמלית קדמית ואחורית (Tru-Lok) + מוט מייצב מנתק",
+                pros_cons: "מלך הסלעים, מגוון שיפורים בלתי מוגבל, חוויית פתוח.",
+                vulnerabilities: "בלאי מוגבר בתפוחים וזרועות בהרמת הגבהות קיצוניות.",
+                image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80"
+            }
+        ];
+
+        let vehicles = [];
+
+        function generateExpandedDataset() {
+            const makesData = [
+                {
+                    make: "טויוטה",
+                    models: [
+                        { name: "טויוטה היילקס (2023)", price: 240000, km: 35000, clearance: 22.5, app: 31, dep: 26, wading: 70, img: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80" },
+                        { name: "טויוטה לנד קרוזר (2018)", price: 220000, km: 110000, clearance: 22.0, app: 31, dep: 25, wading: 70, img: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80" },
+                        { name: "טויוטה לנד קרוזר (2012)", price: 140000, km: 210000, clearance: 22.0, app: 31, dep: 25, wading: 70, img: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80" },
+                        { name: "טויוטה לנד קרוזר (2008)", price: 85000, km: 290000, clearance: 21.5, app: 30, dep: 24, wading: 70, img: "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                },
+                {
+                    make: "מיצובישי",
+                    models: [
+                        { name: "מיצובישי פאג'רו דקאר (2020)", price: 185000, km: 75000, clearance: 23.5, app: 34, dep: 25, wading: 70, img: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80" },
+                        { name: "מיצובישי פאג'רו (2015)", price: 115000, km: 165000, clearance: 22.5, app: 34, dep: 24, wading: 60, img: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80" },
+                        { name: "מיצובישי פאג'רו BK (2008)", price: 65000, km: 260000, clearance: 22.0, app: 34, dep: 24, wading: 60, img: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                },
+                {
+                    make: "ג'יפ",
+                    models: [
+                        { name: "ג'יפ גרנד צ'ירוקי (2021)", price: 215000, km: 58000, clearance: 21.8, app: 30, dep: 26, wading: 50, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80" },
+                        { name: "ג'יפ רנגלר JK (2016)", price: 165000, km: 130000, clearance: 26.0, app: 42, dep: 36, wading: 75, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80" },
+                        { name: "ג'יפ רנגלר JK (2009)", price: 95000, km: 210000, clearance: 25.0, app: 40, dep: 35, wading: 70, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                },
+                {
+                    make: "סוזוקי",
+                    models: [
+                        { name: "סוזוקי ג'ימני (2015)", price: 75000, km: 120000, clearance: 19.0, app: 36, dep: 46, wading: 30, img: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=800&q=80" },
+                        { name: "סוזוקי ג'ימני (2007)", price: 42000, km: 210000, clearance: 19.0, app: 36, dep: 46, wading: 30, img: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=800&q=80" },
+                        { name: "סוזוקי גרנד ויטארה (2012)", price: 48000, km: 175000, clearance: 20.0, app: 29, dep: 27, wading: 40, img: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                },
+                {
+                    make: "לנד רובר",
+                    models: [
+                        { name: "לנד רובר דיפנדר (2022)", price: 420000, km: 38000, clearance: 29.1, app: 38, dep: 40, wading: 90, img: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=800&q=80" },
+                        { name: "לנד רובר דיסקברי 4 (2014)", price: 110000, km: 190000, clearance: 24.0, app: 36, dep: 30, wading: 70, img: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                },
+                {
+                    make: "פורד",
+                    models: [
+                        { name: "פורד ברונקו בדלנדס (2023)", price: 340000, km: 22000, clearance: 29.2, app: 43.2, dep: 37, wading: 85, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80" },
+                        { name: "פורד ריינג'ר ראפטור (2022)", price: 310000, km: 45000, clearance: 28.3, app: 32, dep: 24, wading: 85, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                },
+                {
+                    make: "סובארו",
+                    models: [
+                        { name: "סובארו פורסטר אאוטבק (2021)", price: 135000, km: 62000, clearance: 22.0, app: 22, dep: 23, wading: 40, img: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80" },
+                        { name: "סובארו פורסטר (2014)", price: 62000, km: 160000, clearance: 22.0, app: 23, dep: 24, wading: 40, img: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80" }
+                    ]
+                }
+            ];
+
+            const generated = [];
+            let nextId = 10;
+
+            makesData.forEach(m => {
+                m.models.forEach(mod => {
+                    const yearMatch = mod.name.match(/\((\d{4})\)/);
+                    const yearStr = yearMatch ? yearMatch[1] : "2020";
+
+                    generated.push({
+                        id: nextId++,
+                        make_model: mod.name,
+                        make: m.make,
+                        years: yearStr,
+                        estimated_price: mod.price,
+                        mileage: mod.km,
+                        ground_clearance: mod.clearance,
+                        approach_angle: mod.app,
+                        departure_angle: mod.dep,
+                        breakover_angle: 22,
+                        wading_depth: mod.wading,
+                        towing_capacity: 2500,
+                        fuel_economy: "10.5 ק\"מ/ליטר",
+                        km_per_liter: 10.5,
+                        engine_spec: "2.4L / 3.0L",
+                        drivetrain: "4x4 חלקית / קבועה + Low",
+                        front_axle: "סרן חי / מתלים נפרדים",
+                        rear_axle: "סרן חי",
+                        diff_locks: "נעילת דיפרנציאל מרכזית / חשמלית",
+                        pros_cons: "יכולת שטח גבוהה, אמינות מוכחת לאורך השנים.",
+                        vulnerabilities: "תחזוקה שוטפת נדרשת בהתאם לנסועה ולשימוש בשטח.",
+                        image: mod.img
+                    });
+                });
+            });
+
+            return generated;
+        }
+
+        function initApp() {
+            const saved = localStorage.getItem('offroad_vehicles_data_v2');
+            if (saved) {
+                try {
+                    vehicles = JSON.parse(saved);
+                } catch (e) {
+                    vehicles = [...defaultVehicles, ...generateExpandedDataset()];
+                }
+            } else {
+                vehicles = [...defaultVehicles, ...generateExpandedDataset()];
+                saveVehicles();
+            }
+
+            populateDropdowns();
+            renderVehicles();
+        }
+
+        function saveVehicles() {
+            localStorage.setItem('offroad_vehicles_data_v2', JSON.stringify(vehicles));
+        }
+
+        function populateDropdowns() {
+            // Populate Makes
+            const makeSelect = document.getElementById('filter-make');
+            if (makeSelect) {
+                const makes = Array.from(new Set(vehicles.map(v => v.make || v.make_model.split(' ')[0]))).sort();
+                makeSelect.innerHTML = '<option value="">כל היצרנים</option>' + 
+                    makes.map(m => `<option value="${m}">${m}</option>`).join('');
+            }
+
+            // Populate Years
+            const yearSelect = document.getElementById('filter-year');
+            if (yearSelect) {
+                const years = Array.from(new Set(vehicles.map(v => v.years))).sort((a,b) => b - a);
+                yearSelect.innerHTML = '<option value="">כל השנים</option>' + 
+                    years.map(y => `<option value="${y}">${y}</option>`).join('');
+            }
+        }
+
+        function renderVehicles() {
+            const grid = document.getElementById('vehicles-grid');
+            const emptyState = document.getElementById('empty-state');
+            const countElem = document.getElementById('results-count');
+
+            if (!grid || !emptyState || !countElem) return;
+
+            const searchVal = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+            const makeVal = document.getElementById('filter-make')?.value || '';
+            const priceVal = document.getElementById('filter-price')?.value || '';
+            const kmVal = document.getElementById('filter-km')?.value || '';
+            const yearVal = document.getElementById('filter-year')?.value || '';
+            const clearanceVal = document.getElementById('filter-clearance')?.value || '';
+            const approachVal = document.getElementById('filter-approach')?.value || '';
+            const drivetrainVal = document.getElementById('filter-drivetrain')?.value || '';
+            const locksVal = document.getElementById('filter-locks')?.value || '';
+
+            const filtered = vehicles.filter(v => {
+                if (searchVal && !v.make_model.toLowerCase().includes(searchVal) && !(v.make && v.make.toLowerCase().includes(searchVal))) {
+                    return false;
+                }
+                if (makeVal && v.make !== makeVal && !v.make_model.startsWith(makeVal)) {
+                    return false;
+                }
+                if (priceVal && (v.estimated_price || 0) > parseFloat(priceVal)) {
+                    return false;
+                }
+                if (kmVal && (v.mileage || 0) > parseFloat(kmVal)) {
+                    return false;
+                }
+                if (yearVal && v.years !== yearVal) {
+                    return false;
+                }
+                if (clearanceVal && (v.ground_clearance || 0) < parseFloat(clearanceVal)) {
+                    return false;
+                }
+                if (approachVal && (v.approach_angle || 0) < parseFloat(approachVal)) {
+                    return false;
+                }
+                if (drivetrainVal && !v.drivetrain.includes(drivetrainVal)) {
+                    return false;
+                }
+                if (locksVal && !v.diff_locks.includes(locksVal)) {
+                    return false;
+                }
+                return true;
+            });
+
+            countElem.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(v => `
+                <div onclick="openModal(${v.id})" class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col group">
+                    <div class="relative aspect-video overflow-hidden bg-slate-900">
+                        <img src="${v.image || 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80'}" 
+                             alt="${v.make_model}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                             onerror="this.src='https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80'" />
+                        <div class="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-amber-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-500/30">
+                            ${v.years}
+                        </div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base group-hover:text-amber-600 transition mb-1">${v.make_model}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-amber-600 font-extrabold text-sm">₪${(v.estimated_price || 0).toLocaleString()}</span>
+                                ${v.mileage ? `<span class="text-xs text-slate-400">| ${v.mileage.toLocaleString()} ק"מ</span>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <div>
+                                <span class="text-slate-400 block text-[10px]">גובה גחון</span>
+                                <span class="font-bold text-slate-800">${v.ground_clearance} ס"מ</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[10px]">זווית גישה</span>
+                                <span class="font-bold text-slate-800">${v.approach_angle}°</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1 text-xs text-slate-600 pt-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">הנעה:</span>
+                                <span class="font-semibold text-slate-800 truncate max-w-[140px]">${v.drivetrain}</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <a href="https://www.yad2.co.il/vehicles/cars?manufacturer=${encodeURIComponent(v.make || '')}&model=${encodeURIComponent(v.make_model.split(' ')[1] || '')}" 
+                               target="_blank" 
+                               onclick="event.stopPropagation();" 
+                               class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> חפש דגם זה ביד2
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal(id) {
+            const vehicle = vehicles.find(v => v.id === id);
+            if (!vehicle) return;
+
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <img src="${vehicle.image}" alt="${vehicle.make_model}" class="w-full h-48 md:h-64 object-cover rounded-xl shadow-md">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">${vehicle.make_model}</h2>
+                        <p class="text-sm font-bold text-amber-600">₪${(vehicle.estimated_price || 0).toLocaleString()}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <div><span class="text-slate-400 block">מרווח גחון</span><span class="font-bold">${vehicle.ground_clearance} ס"מ</span></div>
+                        <div><span class="text-slate-400 block">זווית גישה</span><span class="font-bold">${vehicle.approach_angle}°</span></div>
+                        <div><span class="text-slate-400 block">זווית נטישה</span><span class="font-bold">${vehicle.departure_angle}°</span></div>
+                        <div><span class="text-slate-400 block">כושר צליחה</span><span class="font-bold">${vehicle.wading_depth} ס"מ</span></div>
+                        <div><span class="text-slate-400 block">כושר גרירה</span><span class="font-bold">${vehicle.towing_capacity} ק"ג</span></div>
+                        <div><span class="text-slate-400 block">צריכת דלק</span><span class="font-bold">${vehicle.fuel_economy}</span></div>
+                    </div>
+
+                    <div class="space-y-2 text-xs">
+                        <p><strong>מנוע:</strong> ${vehicle.engine_spec}</p>
+                        <p><strong>הנעה:</strong> ${vehicle.drivetrain}</p>
+                        <p><strong>נעילות דיפרנציאל:</strong> ${vehicle.diff_locks}</p>
+                        <p><strong>יתרונות:</strong> ${vehicle.pros_cons}</p>
+                        <p><strong>נקודות לתשומת לב:</strong> ${vehicle.vulnerabilities}</p>
+                    </div>
+
+                    <a href="https://www.yad2.co.il/vehicles/cars?manufacturer=${encodeURIComponent(vehicle.make || '')}&model=${encodeURIComponent(vehicle.make_model.split(' ')[1] || '')}" 
+                       target="_blank" 
+                       class="block text-center w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition">
+                       לחיפוש דגם זה ביד2
+                    </a>
+                </div>
+            `;
+
+            document.getElementById('vehicle-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('vehicle-modal').classList.add('hidden');
+        }
+
+        function resetFilters() {
+            if (document.getElementById('search-input')) document.getElementById('search-input').value = '';
+            if (document.getElementById('filter-make')) document.getElementById('filter-make').value = '';
+            if (document.getElementById('filter-price')) document.getElementById('filter-price').value = '';
+            if (document.getElementById('filter-km')) document.getElementById('filter-km').value = '';
+            if (document.getElementById('filter-year')) document.getElementById('filter-year').value = '';
+            if (document.getElementById('filter-clearance')) document.getElementById('filter-clearance').value = '';
+            if (document.getElementById('filter-approach')) document.getElementById('filter-approach').value = '';
+            if (document.getElementById('filter-drivetrain')) document.getElementById('filter-drivetrain').value = '';
+            if (document.getElementById('filter-locks')) document.getElementById('filter-locks').value = '';
+            renderVehicles();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+    </script>
+</body>
+</html>
