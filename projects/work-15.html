@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עולם כלי הנגינה - אקדמיה אינטראקטיבית</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Heebo & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        amber: {
+                            850: '#6b320a',
+                            950: '#3a1603',
+                        },
+                        gold: {
+                            300: '#fbe285',
+                            400: '#f8d147',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Heebo', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e110a 50%, #0f172a 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(30, 27, 24, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.2);
+        }
+
+        .active-tab {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+        }
+
+        .piano-key {
+            transition: all 0.1s ease;
+        }
+
+        .piano-key:active, .piano-key.active {
+            transform: translateY(4px);
+            background-color: #fbbf24 !important;
+        }
+
+        .string-btn {
+            transition: all 0.1s ease;
+        }
+        .string-btn:active {
+            transform: scale(0.97);
+            background-color: #f59e0b !important;
+            color: #0f172a !important;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b45309;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .pulse-hover:hover {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased pb-12 flex flex-col min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-card border-b border-amber-500/20 px-4 lg:px-8 py-4 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3 space-x-reverse cursor-pointer" onclick="switchTab('explore')">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-400 flex items-center justify-center text-slate-950 font-bold text-2xl shadow-lg shadow-amber-500/30">
+                    <i class="fa-solid fa-music"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">צלילים וצלילים</h1>
+                    <p class="text-xs text-amber-200/70 font-light">האקדמיה האינטראקטיבית לכלי נגינה</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <nav class="flex items-center bg-slate-900/80 p-1.5 rounded-full border border-amber-500/20 text-sm md:text-base">
+                    <button id="nav-explore" onclick="switchTab('explore')" class="px-5 py-2 rounded-full transition-all duration-300 active-tab font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-shapes"></i>
+                        <span>גלריית הכלים</span>
+                    </button>
+                    <button id="nav-studio" onclick="switchTab('studio')" class="px-5 py-2 rounded-full transition-all duration-300 hover:text-amber-300 text-slate-300 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-keyboard"></i>
+                        <span>סטודיו צלילים</span>
+                    </button>
+                    <button id="nav-guide" onclick="switchTab('guide')" class="px-5 py-2 rounded-full transition-all duration-300 hover:text-amber-300 text-slate-300 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                        <span>מדריך תווים ואקורדים</span>
+                    </button>
+                    <button id="nav-quiz" onclick="switchTab('quiz')" class="px-5 py-2 rounded-full transition-all duration-300 hover:text-amber-300 text-slate-300 font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-gamepad"></i>
+                        <span>חידון מוזיקלי</span>
+                    </button>
+                </nav>
+
+                <!-- WhatsApp Share Button -->
+                <button onclick="shareViaWhatsApp()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-full shadow-lg transition flex items-center gap-2 font-bold text-sm" title="שתף בוואטסאפ">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span class="hidden sm:inline">שיתוף</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow w-full">
+
+        <!-- SECTION 1: EXPLORE INSTRUMENTS -->
+        <section id="section-explore" class="space-y-8">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <h2 class="text-3xl md:text-5xl font-extrabold text-slate-100 tracking-tight">
+                    גלו את קסם <span class="text-amber-400 underline decoration-amber-500/40">המוזיקה והצלילים</span>
+                </h2>
+                <p class="text-slate-300 text-base md:text-lg">
+                    בחרו כלי נגינה, חקרו את התווים והאקורדים שלהם, ונגנו עליהם ישירות בדפדפן!
+                </p>
+
+                <!-- Categories filter -->
+                <div class="flex flex-wrap justify-center gap-2 pt-4">
+                    <button onclick="filterCategory('all')" class="cat-btn active-cat bg-amber-600 text-white px-4 py-2 rounded-full text-sm font-semibold transition hover:bg-amber-500" data-cat="all">
+                        הכל (<span id="count-all">0</span>)
+                    </button>
+                    <button onclick="filterCategory('string')" class="cat-btn bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-full text-sm font-semibold transition border border-amber-500/20 hover:border-amber-500/50" data-cat="string">
+                        🎻 כלי מיתר
+                    </button>
+                    <button onclick="filterCategory('wind')" class="cat-btn bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-full text-sm font-semibold transition border border-amber-500/20 hover:border-amber-500/50" data-cat="wind">
+                        🎷 כלי נשיפה
+                    </button>
+                    <button onclick="filterCategory('keyboard')" class="cat-btn bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-full text-sm font-semibold transition border border-amber-500/20 hover:border-amber-500/50" data-cat="keyboard">
+                        🎹 כלי מקלדת
+                    </button>
+                    <button onclick="filterCategory('percussion')" class="cat-btn bg-slate-800 text-slate-300 hover:text-white px-4 py-2 rounded-full text-sm font-semibold transition border border-amber-500/20 hover:border-amber-500/50" data-cat="percussion">
+                        🥁 כלי הקשה
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instrument Grid -->
+            <div id="instruments-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4"></div>
+        </section>
+
+        <!-- SECTION 2: INSTRUMENT DETAIL MODAL -->
+        <div id="detail-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+            <div class="glass-card bg-slate-900 border-amber-500/40 rounded-3xl max-w-4xl w-full max-h-[95vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
+                
+                <div class="flex justify-between items-center absolute top-6 left-6 right-6 z-10">
+                    <button onclick="shareCurrentInstrument()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow">
+                        <i class="fa-brands fa-whatsapp text-sm"></i> שתף כלי בוואטסאפ
+                    </button>
+                    <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white bg-slate-800/80 hover:bg-amber-600 w-10 h-10 rounded-full flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center gap-6 border-b border-amber-500/20 pb-6 pt-4">
+                    <div class="w-28 h-28 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-700/30 flex items-center justify-center text-6xl text-amber-400 shadow-inner shrink-0 border border-amber-500/30">
+                        <i id="modal-icon" class="fa-solid fa-guitar"></i>
+                    </div>
+                    <div class="text-center md:text-right space-y-2">
+                        <div class="flex items-center justify-center md:justify-start gap-3">
+                            <span id="modal-category" class="bg-amber-500/20 text-amber-300 text-xs px-3 py-1 rounded-full border border-amber-500/30">כלי מיתר</span>
+                            <span class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full"><i class="fa-solid fa-earth-americas ml-1"></i><span id="modal-origin">ספרד</span></span>
+                        </div>
+                        <h2 id="modal-title" class="text-3xl md:text-4xl font-extrabold text-amber-100">גיטרה</h2>
+                        <p id="modal-subtitle" class="text-slate-400 text-sm md:text-base">כלי מיתר פופולרי</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Instrument Simulator Board -->
+                <div class="bg-slate-950 p-5 rounded-2xl border border-amber-500/35 space-y-4 shadow-inner">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold text-amber-300 flex items-center gap-2">
+                            <i class="fa-solid fa-hand-pointer text-amber-500 animate-bounce"></i>
+                            סימולטור נגינה חי (לחצו על הכפתורים לנגינה בזמן אמת!)
+                        </h3>
+                        <span class="text-xs text-amber-400/80 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">מצב נגינה אינטראקטיבי</span>
+                    </div>
+                    
+                    <div id="interactive-play-board" class="bg-slate-900 p-4 rounded-xl border border-amber-500/20 min-h-[140px] flex flex-col justify-center items-center gap-3"></div>
+                </div>
+
+                <!-- Notes & Chords Guide Section -->
+                <div class="bg-amber-950/20 p-5 rounded-2xl border border-amber-500/30 space-y-3">
+                    <h3 class="text-lg font-bold text-amber-300 flex items-center gap-2">
+                        <i class="fa-solid fa-book-open-reader text-amber-500"></i>
+                        תווים ואקורדים מומלצים לתרגול
+                    </h3>
+                    <p class="text-xs text-slate-300">לחצו על האקורד או התו לקבלת הסבר מפורט ושמע:</p>
+                    <div id="modal-notes-guide" class="flex flex-wrap gap-2"></div>
+                    <div id="modal-guide-display" class="bg-slate-950 p-4 rounded-xl border border-amber-500/20 text-center text-amber-200 text-sm min-h-[60px] flex items-center justify-center">
+                        בחרו תו או אקורד למעלה לצפייה בהסבר.
+                    </div>
+                </div>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-300">
+                    <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 space-y-2">
+                        <h4 class="font-bold text-amber-300 flex items-center gap-2"><i class="fa-solid fa-wave-square text-amber-500"></i> איך מופק הצליל?</h4>
+                        <p id="modal-sound-prod" class="leading-relaxed">...</p>
+                    </div>
+                    <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 space-y-2">
+                        <h4 class="font-bold text-amber-300 flex items-center gap-2"><i class="fa-solid fa-landmark text-amber-500"></i> היסטוריה ומוצא</h4>
+                        <p id="modal-history" class="leading-relaxed">...</p>
+                    </div>
+                    <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 space-y-2">
+                        <h4 class="font-bold text-amber-300 flex items-center gap-2"><i class="fa-solid fa-puzzle-piece text-amber-500"></i> חלקים מרכזיים</h4>
+                        <ul id="modal-parts" class="list-disc list-inside space-y-1 text-slate-300"></ul>
+                    </div>
+                    <div class="bg-slate-800/40 p-5 rounded-2xl border border-slate-700/50 space-y-2">
+                        <h4 class="font-bold text-amber-300 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-amber-500"></i> הידעת?</h4>
+                        <p id="modal-facts" class="italic text-amber-100/90">...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: SOUND STUDIO / SYNTHESIZER -->
+        <section id="section-studio" class="hidden space-y-8">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-100">
+                    סטודיו <span class="text-amber-400">הנגינה הוירטואלי</span>
+                </h2>
+                <p class="text-slate-300">נגנו במקלדת הפסנתר, בחרו סגנונות סאונד והתנסו בצלילים שונים.</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-3xl max-w-4xl mx-auto space-y-6">
+                <div class="flex flex-wrap justify-between items-center gap-4 border-b border-amber-500/20 pb-4">
+                    <div>
+                        <label class="text-xs text-amber-400 uppercase font-bold tracking-wider block mb-1">סוג סאונד</label>
+                        <select id="synth-sound-type" onchange="changeSynthSound(this.value)" class="bg-slate-900 text-slate-200 border border-amber-500/30 rounded-xl px-4 py-2 focus:outline-none focus:border-amber-500">
+                            <option value="piano">🎹 פסנתר</option>
+                            <option value="organ">📻 אורגן</option>
+                            <option value="flute">🪈 חליל</option>
+                            <option value="guitar">🎸 סינטי-גיטרה</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-amber-400 uppercase font-bold tracking-wider block mb-1">אוקטבה</label>
+                        <div class="flex items-center space-x-2 space-x-reverse">
+                            <button onclick="changeOctave(-1)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold border border-amber-500/20">-</button>
+                            <span id="octave-display" class="font-mono text-lg font-bold px-3">4</span>
+                            <button onclick="changeOctave(1)" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold border border-amber-500/20">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative flex justify-center items-stretch h-52 bg-slate-950 p-4 rounded-2xl overflow-x-auto shadow-inner border border-slate-800" id="piano-keyboard"></div>
+                <div class="text-center text-xs text-slate-400">
+                    <p><i class="fa-regular fa-keyboard ml-1"></i> מקשי מקלדת במחשב: A, S, D, F, G, H, J, K</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3.5: GUIDE -->
+        <section id="section-guide" class="hidden space-y-8 max-w-5xl mx-auto">
+            <div class="text-center space-y-3">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-100">אקדמיית <span class="text-amber-400">התווים והאקורדים</span></h2>
+                <p class="text-slate-300">מדריך מפורט לקריאת תווים, הכרת אקורדים בסיסיים ופריסה על גבי הכלים.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-amber-500/35">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-xl font-bold"><i class="fa-solid fa-music"></i></div>
+                    <h3 class="text-xl font-bold text-amber-200">שמות התווים (Solfège)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">התווים הבסיסיים: <strong>דו (C), רה (D), מי (E), פה (F), סול (G), לה (A), סי (B)</strong>.</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-amber-500/35">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-xl font-bold"><i class="fa-solid fa-guitar"></i></div>
+                    <h3 class="text-xl font-bold text-amber-200">אקורדים פופולריים</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">אקורדים בסיסיים ללמידה מהירה: <strong>C, G, Am, F, D, Em</strong>.</p>
+                </div>
+                <div class="glass-card p-6 rounded-3xl space-y-3 border-amber-500/35">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-xl font-bold"><i class="fa-solid fa-keyboard"></i></div>
+                    <h3 class="text-xl font-bold text-amber-200">מבנה קלידים</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">התו דו (C) תמיד נמצא מיד משמאל לצמד המקשים השחורים בפסנתר.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: QUIZ -->
+        <section id="section-quiz" class="hidden max-w-3xl mx-auto space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-100">חידון <span class="text-amber-400">כלי הנגינה הגדול</span></h2>
+                <p class="text-slate-300">בחנו את הידע שלכם!</p>
+            </div>
+            <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6 relative" id="quiz-container">
+                <div class="flex items-center justify-between text-sm text-amber-300 border-b border-amber-500/20 pb-4">
+                    <span>שאלה <span id="quiz-current-num">1</span> מתוך <span id="quiz-total-num">5</span></span>
+                    <span>ניקוד: <span id="quiz-score" class="font-bold text-lg text-amber-400">0</span></span>
+                </div>
+                <h3 id="quiz-question-text" class="text-xl font-bold text-slate-100 min-h-[50px]"></h3>
+                <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2"></div>
+                <div id="quiz-feedback" class="hidden p-4 rounded-xl text-center font-bold text-base"></div>
+                <div class="flex justify-end pt-4">
+                    <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden bg-amber-600 hover:bg-amber-500 text-white font-bold px-6 py-2.5 rounded-xl transition">לשאלה הבאה <i class="fa-solid fa-arrow-left mr-2"></i></button>
+                </div>
+            </div>
+            <div id="quiz-result-card" class="hidden glass-card p-8 rounded-3xl text-center space-y-6">
+                <div class="w-20 h-20 rounded-full bg-amber-500/20 text-amber-400 text-4xl flex items-center justify-center mx-auto border border-amber-500/40"><i class="fa-solid fa-trophy"></i></div>
+                <h3 class="text-3xl font-bold text-slate-100">כל הכבוד! סיימת את החידון</h3>
+                <p class="text-xl text-slate-300">הצלחת לענות נכון על <span id="quiz-final-score" class="font-extrabold text-amber-400">0</span> מתוך 5 שאלות.</p>
+                <button onclick="resetQuiz()" class="bg-gradient-to-r from-amber-600 to-yellow-500 text-slate-950 font-extrabold px-8 py-3 rounded-full transition text-lg">נסה שוב</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-auto border-t border-amber-500/10 py-6 text-center text-xs text-slate-400 space-y-2">
+        <p>עולם כלי הנגינה - אקדמיה אינטראקטיבית ללמידה ונגינה בזמן אמת</p>
+    </footer>
+
+    <script>
+        const instrumentsData = [
+            {
+                id: 'drums', name: 'מערכת תופים אקוסטית', subtitle: 'לב הקצב של להקת הרוק והג\'אז', category: 'percussion', categoryName: 'כלי הקשה', icon: 'fa-drum', origin: 'ארצות הברית',
+                soundProd: 'הקשה עם מקלות על גבי ממברנות מתוחות ומצילתיים שונות.',
+                history: 'התפתחה בתחילת המאה ה-20 עם שילוב תופים שונים למערכת אחת מרוכזת.',
+                parts: ['תוף בס (Kick)', 'תוף סנר (Snare)', 'טמטמים', 'מצילתיים (Hi-Hat & Crash)'],
+                facts: 'מתופפים משתמשים בכל ארבע הגפיים בו-זמנית בעצמאות מוחלטת!',
+                notes: [
+                    { name: 'בס (Kick)', freq: 70.00, chord: 'Kick' },
+                    { name: 'סנר (Snare)', freq: 220.00, chord: 'Snare' },
+                    { name: 'היי-האט (Hi-Hat)', freq: 500.00, chord: 'Hi-Hat' },
+                    { name: 'קראש (Crash)', freq: 400.00, chord: 'Crash' }
+                ],
+                learningItems: [
+                    { label: 'גרוב בסיסי (Rock Beat)', desc: 'שילוב עקבי של בס, סנר והיי-האט לייצור קצב יציב.' }
+                ]
+            },
+            {
+                id: 'recorder', name: 'חלילית סופרן', subtitle: 'כלי נשיפה עממי ונגיש ללמידה ראשונית', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-wand-magic-sparkles', origin: 'אירופה',
+                soundProd: 'נשיפת אוויר דרך פיה קבועה ויצירת עמוד אוויר רוטט בצינור.',
+                history: 'כלי נפוץ מאוד בתקופת הרנסאנס והבארוק, וכיום כלי לימוד בסיסי בבתי ספר.',
+                parts: ['פייה', 'גוף ראשי עם חורים', 'חלק תחתון (רגל)'],
+                facts: 'חלילית היא אחד הכלים הקלים ביותר להפקת צליל ראשוני.',
+                notes: [
+                    { name: 'דו (C5)', freq: 523.25, chord: 'C' },
+                    { name: 'רה (D5)', freq: 587.33, chord: 'D' },
+                    { name: 'מי (E5)', freq: 659.25, chord: 'E' },
+                    { name: 'פה (F5)', freq: 698.46, chord: 'F' }
+                ],
+                learningItems: [
+                    { label: 'אחיזת אצבעות נכונה', desc: 'כיסוי מדויק של החורים בעזרת כריות האצבעות.' }
+                ]
+            },
+            {
+                id: 'electric_guitar', name: 'גיטרה חשמלית', subtitle: 'הכלי שהניע את מהפכת הרוקנרול', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'ארצות הברית',
+                soundProd: 'קליטת רטט המיתרים על ידי מגנטים (פיקאפים) והמרתם לאות חשמלי המוגבר ברמקול.',
+                history: 'הומצאה בשנות ה-30 כדי לאפשר לגיטריסטים להישמע מעל תזמורות רועשות.',
+                parts: ['גוף מלא', 'פיקאפים מגנטיים', 'צוואר וסריגים', 'בורר צליל (מעוות/נקי)'],
+                facts: 'גיטרות חשמליות עושות שימוש באפקטים כמו דיסטורשן כדי לשנות את אופי הצליל.',
+                notes: [
+                    { name: 'מיתר 1 (E)', freq: 329.63, chord: 'E' },
+                    { name: 'מיתר 3 (G)', freq: 196.00, chord: 'G' },
+                    { name: 'מיתר 6 (E נמוך)', freq: 82.41, chord: 'Em' }
+                ],
+                learningItems: [
+                    { label: 'פאור-אקורד (Power Chord)', desc: 'אקורד עוצמתי ונפוץ במוזיקת רוק ומטאל.' }
+                ]
+            },
+            {
+                id: 'bass_guitar', name: 'גיטרה בס', subtitle: 'הבסיס הקצבי וההרמוני העמוק', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'ארצות הברית',
+                soundProd: 'פריטה על 4 מיתרים עבים במיוחד המפיקים תדרים נמוכים ועמוקים.',
+                history: 'החליפה את קונטרבס העץ הגדול בלהקות הרוק והג\'אז המודרניות.',
+                parts: ['צוואר ארוך', '4 מיתרים עבים', 'גוף חשמלי ומגבר'],
+                facts: 'גיטרה בס מגשרת בין עולם הקצב (תופים) לעולם המלודיה.',
+                notes: [
+                    { name: 'מיתר E נמוך', freq: 41.20, chord: 'E' },
+                    { name: 'מיתר A', freq: 55.00, chord: 'A' },
+                    { name: 'מיתר D', freq: 73.42, chord: 'D' },
+                    { name: 'מיתר G', freq: 98.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'תפקיד הבס', desc: 'חיבור שורש האקורד לקצב השיר.' }
+                ]
+            },
+            {
+                id: 'classical_guitar', name: 'גיטרה קלאסית', subtitle: 'כלי מיתר ניילון בעל צליל חם ועגול', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'ספרד',
+                soundProd: 'פריטה על 6 מיתרי ניילון גמישים היוצרים צליל אקוסטי רך.',
+                history: 'הצורות המודרניות עוצבו בספרד במאה ה-19 על ידי אנטוניו טורס.',
+                parts: ['לוח תהודה מעץ ארז או אשוח', 'מיתרי ניילון', 'צוואר רחב'],
+                facts: 'מיתרי הניילון רכים יותר לאצבעות מאשר מיתרי המתכת של הגיטרה האקוסטית.',
+                notes: [
+                    { name: 'מיתר E גבוה', freq: 329.63, chord: 'E' },
+                    { name: 'מיתר B', freq: 246.94, chord: 'B' },
+                    { name: 'מיתר G', freq: 196.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'פריטה קלאסית (אפויאנדו)', desc: 'טכניקת פריטה בה האצבע נשענת על המיתר הסמוך.' }
+                ]
+            },
+            {
+                id: 'guitar', name: 'גיטרה אקוסטית', subtitle: 'כלי מיתר פופולרי ורב-גוני', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'ספרד',
+                soundProd: 'הצליל מופק על ידי פריטה באצבעות או במפרט על 6 מיתרים המהדהדים בתיבת תהודה עץ.',
+                history: 'התפתחה מכלי מיתר עתיקים כמו העוד והליתאר הרומי, ועוצבה בספרד במאה ה-19.',
+                parts: ['תיבת תהודה (גוף)', 'צוואר ולוח סריגים', 'מיתרי מתכת', 'מפתחות כיוון', 'גשר'],
+                facts: 'הגיטרה הנמכרת ביותר בהיסטוריה היא הפנדר סטראטוקאסטר החשמלית!',
+                notes: [
+                    { name: 'מיתר 1 (E גבוה)', freq: 329.63, chord: 'E' },
+                    { name: 'מיתר 3 (G)', freq: 196.00, chord: 'G' },
+                    { name: 'מיתר 6 (E נמוך)', freq: 82.41, chord: 'Em' }
+                ],
+                learningItems: [
+                    { label: 'אקורד C (דו מז-ור)', desc: 'מיקום אצבעות: מיתר 5 בסריג 3, מיתר 4 בסריג 2, מיתר 2 בסריג 1.' },
+                    { label: 'אקורד G (סול מז-ור)', desc: 'מיקום אצבעות: מיתר 6 בסריג 3, מיתר 5 בסריג 2, מיתר 1 בסריג 3.' }
+                ]
+            },
+            {
+                id: 'piano', name: 'פסנתר', subtitle: 'מלך הכלים - כלי מקלדת ומיתר מוכש', category: 'keyboard', categoryName: 'כלי מקלדת', icon: 'fa-keyboard', origin: 'איטליה',
+                soundProd: 'הקשה על קליד מניעה פטיש המכה על מיתרי פלדה מתוחים בעוצמה גבוהה.',
+                history: 'הומצא על ידי ברטולומאו כריסטופורי כדי לאפשר שליטה בעוצמת הצליל.',
+                parts: ['מקלדת (88 קלידים)', 'פטישים', 'לוח תהודה', 'דוושות'],
+                facts: 'בפסנתר כנף סטנדרטי יש כ-230 מיתרים.',
+                notes: [
+                    { name: 'דו (C4)', freq: 261.63, chord: 'C' },
+                    { name: 'מי (E4)', freq: 329.63, chord: 'Em' },
+                    { name: 'סול (G4)', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'סולם דו מאז' , desc: 'C - D - E - F - G - A - B - C' }
+                ]
+            },
+            {
+                id: 'violin', name: 'כינור', subtitle: 'הקטן והגבוה במשפחת כלי המיתר', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-compact-disc', origin: 'איטליה',
+                soundProd: 'העברת קשת משומנת בשרף על גבי 4 מיתרי הכינור.',
+                history: 'בוני כינורות אגדיים כמו אנטוניו סטרדיוואריוס יצרו יצירות מופת.',
+                parts: ['גוף הכינור', 'צוואר', '4 מיתרים', 'קשת'],
+                facts: 'בכינור יש מעל 70 חלקי עץ שונים.',
+                notes: [
+                    { name: 'מיתר E (גבוה)', freq: 659.25, chord: 'E' },
+                    { name: 'מיתר A (לה)', freq: 440.00, chord: 'A' }
+                ],
+                learningItems: [
+                    { label: 'תנוחת קשת', desc: 'החזקת קשת יציבה בשורש כף היד להפקת צליל חלק.' }
+                ]
+            },
+            {
+                id: 'cello', name: 'צלו', subtitle: 'כלי מיתר עמוק, מרגש ובעל נוכחות', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'איטליה',
+                soundProd: 'מנוגן בישיבה כשהוא נתמך ברגלית רצפה.',
+                history: 'עמוד השדרה של רביעיית המיתרים והמוזיקה הקלאסית.',
+                parts: ['גוף עץ גדול', 'רגלית נתמכת', 'מיתרים עבים'],
+                facts: 'צליל הצלו הוא הדומה ביותר למנעד קול האדם.',
+                notes: [
+                    { name: 'C2', freq: 65.41, chord: 'C' },
+                    { name: 'G2', freq: 98.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'פוזיציית נגינה', desc: 'ישיבה זקופה וחיבוק גוף הצלו.' }
+                ]
+            },
+            {
+                id: 'oud', name: 'עוד', subtitle: 'מלך הכלים במוזיקה המזרחית', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-music', origin: 'המזרח התיכון',
+                soundProd: 'פריטה על מיתרים כפולים באמצעות נוצה או מפרט ארוך.',
+                history: 'אחד מכלי הנגינה העתיקים בעולם.',
+                parts: ['תיבת תהודה דמוית אגס', 'צוואר קצר ללא סריגים'],
+                facts: 'השם עוד משמעותו המקורית היא עץ.',
+                notes: [
+                    { name: 'רה (D3)', freq: 146.83, chord: 'D' },
+                    { name: 'סול (G2)', freq: 98.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'רבעי טונים', desc: 'דיוק בלחיצה להפקת מקאמים מזרחיים.' }
+                ]
+            },
+            {
+                id: 'trumpet', name: 'חצוצרה', subtitle: 'כלי נשיפה מתכתי בעל עוצמה והברקה', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-bullhorn', origin: 'מצרים העתיקה',
+                soundProd: 'ויברציית שפתיים בתוך פייה עגולה והגברת הצליל דרך צינור מתכת.',
+                history: 'שימשה במקור לאיתותים בקרבות צבאיים.',
+                parts: ['פייה', 'שסתומים', 'פעמון מתכת'],
+                facts: 'חצוצרות עתיקות נמצאו בקברו של המלך תות ענח אמן.',
+                notes: [
+                    { name: 'דו (C4)', freq: 261.63, chord: 'C' },
+                    { name: 'סול (G4)', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'טכניקת Buzzing', desc: 'רטט שפתיים עצמאי בפייה.' }
+                ]
+            },
+            {
+                id: 'clarinet', name: 'קלרינט', subtitle: 'כלי נשיפה מעץ בעל לשונית יחידה', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-feather', origin: 'גרמניה',
+                soundProd: 'נשיפה שגורמת ללשונית עץ קטנה על הפייה לרעוד.',
+                history: 'זכה לפופולריות עצומה אצל מוצרט וברהמס.',
+                parts: ['פייה ולשונית', 'גוף עץ עם קלידים'],
+                facts: 'הקלרינט מכסה את מנעד הצלילים הרחב ביותר מבין כלי הנשיפה מעץ.',
+                notes: [
+                    { name: 'E3', freq: 164.81, chord: 'E' },
+                    { name: 'C4', freq: 261.63, chord: 'C' }
+                ],
+                learningItems: [
+                    { label: 'אחיזת פייה', desc: 'שמירת לחץ שפתיים מאוזן.' }
+                ]
+            },
+            {
+                id: 'accordion', name: 'אקורדיון', subtitle: 'כלי מקלדת ומפוח נייד', category: 'keyboard', categoryName: 'כלי מקלדת', icon: 'fa-sliders', origin: 'גרמניה',
+                soundProd: 'פתיחה וסגירת מפוח אוויר המפעיל לשוניות מתכת.',
+                history: 'כלי מרכזי במוזיקה עממית צרפתית ורוסית.',
+                parts: ['מפוח אוויר', 'מקלדת ימין', 'כפתורי בס'],
+                facts: 'מאפשר לנגן מלודיה ואקורדים מלאים בו-זמנית.',
+                notes: [
+                    { name: 'C4', freq: 261.63, chord: 'C' },
+                    { name: 'F4', freq: 349.23, chord: 'F' }
+                ],
+                learningItems: [
+                    { label: 'תיאום מפוח', desc: 'סנכרון משיכת המפוח.' }
+                ]
+            },
+            {
+                id: 'saxophone', name: 'סקסופון', subtitle: 'כלי נשיפה מתכתי בעל גוון גאזי חם', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-music', origin: 'בלגיה',
+                soundProd: 'נשיפה דרך פייה עם לשונית עץ בתוך גוף מתכת חרוטי.',
+                history: 'תוכנן על ידי אדולף סאקס כגשר בין כלי נשיפה מעץ למתכת.',
+                parts: ['פייה', 'צוואר מעוקל', 'גוף מתכת ראשי'],
+                facts: 'סקסופון הוא סמל מובהק של מוזיקת הגאז.',
+                notes: [
+                    { name: 'A4', freq: 440.00, chord: 'A' },
+                    { name: 'C5', freq: 523.25, chord: 'C' }
+                ],
+                learningItems: [
+                    { label: 'אמברצור', desc: 'שמירת שפתיים גמישות.' }
+                ]
+            },
+            {
+                id: 'harp', name: 'נבל קלאסי', subtitle: 'כלי מיתר עתיק בעל צליל שמימי', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'מצרים העתיקה',
+                soundProd: 'פריטה באצבעות על גבי עשרות מיתרים במשולש.',
+                history: 'אחד מכלי הנגינה המתוארים ביותר בתנך.',
+                parts: ['מסגרת משולשת', 'עמוד ותיבת תהודה', 'מיתרי ניילון'],
+                facts: 'בנבל הקונצרטים ישנם 7 פדיאלים לשינוי גובה הצליל.',
+                notes: [
+                    { name: 'C3', freq: 130.81, chord: 'C' },
+                    { name: 'G3', freq: 196.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'פריטת שתי ידיים', desc: 'שילוב אצבעות בשתי הידיים.' }
+                ]
+            },
+            {
+                id: 'banjo', name: 'בנגו', subtitle: 'כלי מיתר קצבי ממוזיקת הקאנטרי', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-circle-dot', origin: 'אמריקה',
+                soundProd: 'פריטה על מיתרים מעל תוף מרים עגול.',
+                history: 'הובא לאמריקה על ידי עבדים מאפריקה.',
+                parts: ['תוף מרים ראשי', 'עור מתוח', 'צוואר עם סריגים'],
+                facts: 'לשם בנגו יש לעיתים מיתר חמישי קצר.',
+                notes: [
+                    { name: 'G4', freq: 392.00, chord: 'G' },
+                    { name: 'D4', freq: 293.66, chord: 'D' }
+                ],
+                learningItems: [
+                    { label: 'פריטת פלג', desc: 'פריטה מהירה עם אצבעונים.' }
+                ]
+            },
+            {
+                id: 'mandolin', name: 'מנדולינה', subtitle: 'כלי מיתר איטלקי קטן ומהיר', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'איטליה',
+                soundProd: 'פריטה מהירה מאוד באמצעות מפרט על זוגות מיתרים כפולים.',
+                history: 'כלי פופולרי במוזיקה עממית איטלקית.',
+                parts: ['גוף קערה עגול', 'צוואר קצר', 'מיתרים כפולים'],
+                facts: 'הודות לפריטת הטרמולו נשמעת כצליל רצוף.',
+                notes: [
+                    { name: 'E5', freq: 659.25, chord: 'E' },
+                    { name: 'A4', freq: 440.00, chord: 'A' }
+                ],
+                learningItems: [
+                    { label: 'טרמולו', desc: 'רעידת מפרט מהירה.' }
+                ]
+            },
+            {
+                id: 'harmonica', name: 'מפוחית פה', subtitle: 'כלי נשיפה קטן הנישא בכיס', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-wind', origin: 'גרמניה',
+                soundProd: 'נשיפה או שאיפת אוויר דרך חריצים קטנים המפעילים לשוניות מתכת.',
+                history: 'הפכה לכלי נשק מוזיקלי מרכזי בבלוז וברוק.',
+                parts: ['מסגרת חיצונית', 'חריצי נשיפה', 'לשוניות מתכת'],
+                facts: 'זהו כלי הנגינה היחיד שמנגנים עליו גם בשאיפה וגם בנשיפה!',
+                notes: [
+                    { name: 'C4', freq: 261.63, chord: 'C' },
+                    { name: 'G4', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'כפיפת צליל', desc: 'שינוי לחץ אוויר בפה.' }
+                ]
+            },
+            {
+                id: 'trombone', name: 'טרומבון', subtitle: 'כלי נשיפה מתכתי בעל שרוול הזזה אורך', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-bullhorn', origin: 'אירופה',
+                soundProd: 'ויברציית שפתיים בשילוב דחיפה ומשיכה של מסילת מתכת.',
+                history: 'אחד הכלים הבודדים שאינם משתמשים בשסתומים רגילים.',
+                parts: ['פייה', 'מסילת הזזה', 'פעמון מתכת'],
+                facts: 'מקור השם הוא חצוצרה ענקית.',
+                notes: [
+                    { name: 'Bb2', freq: 116.54, chord: 'Bb' },
+                    { name: 'F3', freq: 174.61, chord: 'F' }
+                ],
+                learningItems: [
+                    { label: 'גליסנדדו חלק', desc: 'החלקת מסילה חלקה בין צלילים.' }
+                ]
+            },
+            {
+                id: 'xylophone', name: 'קסילופון', subtitle: 'כלי הקשה מלודי בעל קוביות עץ', category: 'percussion', categoryName: 'כלי הקשה', icon: 'fa-bars', origin: 'אפריקה ואסיה',
+                soundProd: 'הקשה באמצעות פטישונים קטנים על גבי לוחות עץ.',
+                history: 'כלי נגינה עתיק ביותר שנמצא בתרבויות רבות.',
+                parts: ['לוחות עץ מדורגים', 'תיבת תהודה', 'פטישונים'],
+                facts: 'משמעות המילה ביוונית היא קול עץ.',
+                notes: [
+                    { name: 'C5', freq: 523.25, chord: 'C' },
+                    { name: 'G4', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'אחיזת פטישונים', desc: 'שחרור פרק כף היד.' }
+                ]
+            },
+            {
+                id: 'sitar', name: 'סיטאר', subtitle: 'כלי מיתר הודי בעל צליל מהדהד', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-music', origin: 'הודו',
+                soundProd: 'פריטה על מיתרים ראשיים מעל גשר קעור מיוחד.',
+                history: 'הפך למפורסם בעולם המערבי בשנות ה-60 הודות לביטלס.',
+                parts: ['גוף דלעת עגול', 'צוואר רחב עם סריגים עקומים', 'מיתרי סימפתיה'],
+                facts: 'לסיטאר יש עוד כ-11 עד 13 מיתרי סימפתיה שמהדהדים מעצמם.',
+                notes: [
+                    { name: 'Sa (C4)', freq: 261.63, chord: 'C' },
+                    { name: 'Pa (G4)', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'משיכת מיתר', desc: 'משיכת המיתר הצידה על הסריג.' }
+                ]
+            },
+            {
+                id: 'buzuki', name: 'בוזוקי יווני', subtitle: 'כלי מיתר יווני בעל גוון נשמה ים-תיכוני', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'יוון',
+                soundProd: 'פריטה במפרט דק על זוגות מיתרים מתכתיים.',
+                history: 'הכלי המזוהה ביותר עם מוזיקת הרבטיקו.',
+                parts: ['גוף קערה מעץ', 'צוואר ארוך', 'מיתרים כפולים'],
+                facts: 'הגיע ליוון יחד עם פליטים מיוניה.',
+                notes: [
+                    { name: 'D4', freq: 293.66, chord: 'D' },
+                    { name: 'A3', freq: 220.00, chord: 'A' }
+                ],
+                learningItems: [
+                    { label: 'פריטה יוונית', desc: 'שילוב פריטות מהירות ושמחות.' }
+                ]
+            },
+            {
+                id: 'kamancheh', name: 'קמנצה', subtitle: 'כלי מיתר קשתי עתיק מהמזרח', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-compact-disc', origin: 'פרס',
+                soundProd: 'סיבוב הכלי ביד בזמן העברת קשת על מיתרים.',
+                history: 'אחד מכלי הקשת העתיקים באסיה ובפרס.',
+                parts: ['גוף כדורי מצופה עור', 'מוט תמיכה', 'קשת עדינה'],
+                facts: 'הנגן מסובב את הכלי עצמו כדי להגיע למיתרים.',
+                notes: [
+                    { name: 'A3', freq: 220.00, chord: 'A' },
+                    { name: 'E4', freq: 329.63, chord: 'E' }
+                ],
+                learningItems: [
+                    { label: 'טחינת צליל', desc: 'שליטה בסיבוב העדין.' }
+                ]
+            },
+            {
+                id: 'bagpipes', name: 'חמת חלילים', subtitle: 'כלי נשיפה מסורתי בעל שק אוויר', category: 'wind', categoryName: 'כלי נשיפה', icon: 'fa-wind', origin: 'סקוטלנד',
+                soundProd: 'נשיפה לשק אוויר ודחיפתו בעזרת הזרוע.',
+                history: 'כלי מלחמה וטקסים סקוטיים מסורתיים.',
+                parts: ['שק אוויר', 'צינור נשיפה', 'חליל מלודיה'],
+                facts: 'הצליל חייב להיות רציף לחלוטין ללא הפסקות נשימה.',
+                notes: [
+                    { name: 'A4', freq: 440.00, chord: 'A' },
+                    { name: 'G4', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'לחץ אוויר', desc: 'שמירת שק מלא באוויר באופן רציף.' }
+                ]
+            },
+            {
+                id: 'pipe_organ', name: 'עוגב כנסייתי', subtitle: 'מפלצת הצלילים של כלי המקלדת', category: 'keyboard', categoryName: 'כלי מקלדת', icon: 'fa-church', origin: 'אירופה',
+                soundProd: 'הזרמת אוויר בלחץ דרך מאות צינורות עץ ומתכת.',
+                history: 'הכלי הגדול והמורכב ביותר שנבנה אי פעם בקתדרלות.',
+                parts: ['מקלדות מרובות', 'מקלדת רגליים', 'צינורות ענק'],
+                facts: 'בעוגבים גדולים ישנם מעל 30,000 צינורות.',
+                notes: [
+                    { name: 'C2', freq: 65.41, chord: 'C' },
+                    { name: 'C4', freq: 261.63, chord: 'C' }
+                ],
+                learningItems: [
+                    { label: 'נגינת רגליים', desc: 'שימוש במקלדת פדלים.' }
+                ]
+            },
+            {
+                id: 'chimes', name: 'פעמוני תזמורת', subtitle: 'צינורות מתכת תלויים בעלי צליל כנסייתי', category: 'percussion', categoryName: 'כלי הקשה', icon: 'fa-bell', origin: 'אירופה',
+                soundProd: 'הקשה עם פטיש מרופד על צינורות מתכת תלויים.',
+                history: 'נוצר כדי לדמות פעמוני כנסייה באולמות קונצרטים.',
+                parts: ['מסגרת תלייה', 'צינורות ברונזה', 'פטישי הקשה'],
+                facts: 'הושמעו ביצירת המופת Tubular Bells.',
+                notes: [
+                    { name: 'C4', freq: 261.63, chord: 'C' },
+                    { name: 'G4', freq: 392.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'הנחתת צליל', desc: 'עצירת רטט הצינור ביד.' }
+                ]
+            },
+            {
+                id: 'timpani', name: 'טימפני', subtitle: 'תופי תזמורת בעלי גובה צליל ניתן לכוונון', category: 'percussion', categoryName: 'כלי הקשה', icon: 'fa-drum', origin: 'אירופה',
+                soundProd: 'הקשה על ממברנה מעל קערת נחושת עם פדל שינוי מתח.',
+                history: 'היו בשימוש צבאי על גבי סוסים.',
+                parts: ['קערת נחושת', 'עור מתוח', 'פדל רגל'],
+                facts: 'מסוגל לנגן תווים מוזיקליים מדויקים.',
+                notes: [
+                    { name: 'F2', freq: 87.31, chord: 'F' },
+                    { name: 'C3', freq: 130.81, chord: 'C' }
+                ],
+                learningItems: [
+                    { label: 'שינוי כוונון בפדל', desc: 'העלאת והורדת גובה הצליל.' }
+                ]
+            },
+            {
+                id: 'santur', name: 'סנטור', subtitle: 'כלי מיתר הקשה טרפזי עתיק', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-music', origin: 'פרס',
+                soundProd: 'הקשה קלילה על עשרות מיתרים בעזרת מקלות עץ.',
+                history: 'אביהם הקדמון של הפסנתר והקסילופון.',
+                parts: ['תיבת תהודה טרפזית', 'מיתרי פלדה', 'מקלות הקשה'],
+                facts: 'יש בו מעל 70 מיתרים שונים.',
+                notes: [
+                    { name: 'C4', freq: 261.63, chord: 'C' },
+                    { name: 'E4', freq: 329.63, chord: 'E' }
+                ],
+                learningItems: [
+                    { label: 'פריטת מקלונים', desc: 'קבלת צליל פעמוני מרחף.' }
+                ]
+            },
+            {
+                id: 'ukulele', name: 'יוקלילי', subtitle: 'גיטרה הוואית קטנה ושמחה', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-guitar', origin: 'הוואי',
+                soundProd: 'פריטה על 4 מיתרי ניילון.',
+                history: 'הובא להוואי בסוף המאה ה-19.',
+                parts: ['גוף קטן', 'צוואר קצר', '4 מיתרי ניילון'],
+                facts: 'פירוש השם בהוואית הוא פרעוש קופץ.',
+                notes: [
+                    { name: 'G4', freq: 392.00, chord: 'G' },
+                    { name: 'C4', freq: 261.63, chord: 'C' }
+                ],
+                learningItems: [
+                    { label: 'אקורד C', desc: 'לחיצה על מיתר 1 בסריג 3.' }
+                ]
+            },
+            {
+                id: 'balalaika', name: 'בללייקה', subtitle: 'כלי מיתר רוסי משולש ומסורתי', category: 'string', categoryName: 'כלי מיתר', icon: 'fa-music', origin: 'רוסיה',
+                soundProd: 'פריטה על 3 מיתרים על גוף משולש.',
+                history: 'הכלי הלאומי של רוסיה.',
+                parts: ['תיבת תהודה משולשת', 'צוואר ארוך', '3 מיתרים'],
+                facts: 'למרות שיש לו 3 מיתרים בלבד, מנגנים עליו טכניקות מורכבות.',
+                notes: [
+                    { name: 'E4', freq: 329.63, chord: 'E' },
+                    { name: 'A4', freq: 440.00, chord: 'A' }
+                ],
+                learningItems: [
+                    { label: 'פריטה רוסית', desc: 'פריטה מהירה באצבע.' }
+                ]
+            },
+            {
+                id: 'gong', name: 'גונג', subtitle: 'דיסקת מתכת רוטטת בעלת צליל עמוק', category: 'percussion', categoryName: 'כלי הקשה', icon: 'fa-circle', origin: 'סין',
+                soundProd: 'הקשה עם פטיש כבד על דיסקת ברונזה ענקית.',
+                history: 'היה בשימוש בטקסים דתיים ובסין העתיקה.',
+                parts: ['דיסקת ברונזה', 'מסגרת תלייה', 'פטיש הקשה'],
+                facts: 'גונג ענק ממלא אולם קונצרטים שלם בצליל רוטט.',
+                notes: [
+                    { name: 'C2', freq: 65.41, chord: 'C' },
+                    { name: 'G2', freq: 98.00, chord: 'G' }
+                ],
+                learningItems: [
+                    { label: 'הקשה מבוקרת', desc: 'פגיעה בקצה או במרכז.' }
+                ]
+            }
+        ];
+
+        let currentActiveInstId = null;
+        const quizQuestions = [
+            {
+                question: 'איזה כלי מבין הבאים משתייך למשפחת כלי הנשיפה מעץ למרות שהוא עשוי מתכת?',
+                options: ['חצוצרה', 'חליל צד', 'טרומבון', 'נבל'],
+                correct: 1,
+                hint: 'מוצאו העתיק היה מעץ, וכיום הוא שייך למשפחה זו.'
+            },
+            {
+                question: 'מהו פירוש השם פסנתר (פיאנופורטה) באיטלקית?',
+                options: ['גדול ומרשים', 'רך וחזק', 'מהיר ואיטי', 'מיתר ופטיש'],
+                correct: 1,
+                hint: 'זה מתאר את היכולת לנגן בו גם חלש וגם בעוצמה.'
+            },
+            {
+                question: 'באיזה כלי נגנו האסטרונאוטים הראשונים בחלל?',
+                options: ['גיטרה', 'חליל', 'מפוחית פה', 'כינור'],
+                correct: 2,
+                hint: 'כלי נשיפה קטן מאוד שנכנס לכיס.'
+            },
+            {
+                question: 'ממה עשויות השערות של קשת הכינור המסורתית?',
+                options: ['חוטי ניילון', 'שיער סוס', 'סיבי פחמן', 'חוטי משי'],
+                correct: 1,
+                hint: 'זהו חומר טבעי המגיע מזנב של חיה אצילה.'
+            },
+            {
+                question: 'כמה מיתרים יש בגיטרה קלאסית/אקוסטית סטנדרטית?',
+                options: ['4', '5', '6', '8'],
+                correct: 2,
+                hint: 'זהו המספר הסטנדרטי של המיתרים.'
+            }
+        ];
+
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSynthesizedTone(freq, type = 'sine', duration = 0.8) {
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+                gain.gain.setValueAtTime(0.001, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                console.log('Audio playback error:', e);
+            }
+        }
+
+        function shareViaWhatsApp() {
+            const text = encodeURIComponent("היי! אני לומד ומנגן באקדמיה האינטראקטיבית לכלי נגינה 🎵 בואו לגלות ולהנות גם: ");
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function shareCurrentInstrument() {
+            const inst = instrumentsData.find(i => i.id === currentActiveInstId);
+            const name = inst ? inst.name : "כלי נגינה מדהים";
+            const text = encodeURIComponent(`אני צופה ומתנסה עכשיו בנגינה על ${name} באקדמיה האינטראקטיבית לכלי נגינה! 🎻🎹`);
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function switchTab(tabName) {
+            ['explore', 'studio', 'guide', 'quiz'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('active-tab');
+                document.getElementById(`nav-${t}`).classList.add('text-slate-300');
+            });
+            document.getElementById(`section-${tabName}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            activeNav.classList.add('active-tab');
+            activeNav.classList.remove('text-slate-300');
+        }
+
+        function renderInstruments(items) {
+            const container = document.getElementById('instruments-grid');
+            container.innerHTML = '';
+            items.forEach(inst => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-6 rounded-3xl cursor-pointer pulse-hover transition flex flex-col justify-between group';
+                card.onclick = () => openDetailModal(inst.id);
+                card.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-start">
+                            <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-3xl group-hover:scale-110 transition duration-300">
+                                <i class="fa-solid ${inst.icon}"></i>
+                            </div>
+                            <span class="bg-slate-800 text-slate-300 text-xs px-2.5 py-1 rounded-full border border-slate-700">${inst.origin}</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-amber-400 font-semibold uppercase tracking-wider">${inst.categoryName}</span>
+                            <h3 class="text-2xl font-bold text-slate-100 group-hover:text-amber-300 transition">${inst.name}</h3>
+                            <p class="text-xs text-slate-400 mt-1 line-clamp-2">${inst.subtitle}</p>
+                        </div>
+                    </div>
+                    <div class="pt-6 border-t border-amber-500/10 flex justify-between items-center text-xs text-amber-300 font-medium">
+                        <span>למד עוד ונגן</span>
+                        <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition duration-300"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+                if (btn.getAttribute('data-cat') === cat) {
+                    btn.classList.add('bg-amber-600', 'text-white');
+                    btn.classList.remove('bg-slate-800', 'text-slate-300');
+                }
+            });
+            if (cat === 'all') {
+                renderInstruments(instrumentsData);
+            } else {
+                renderInstruments(instrumentsData.filter(i => i.category === cat));
+            }
+        }
+
+        function openDetailModal(id) {
+            const inst = instrumentsData.find(i => i.id === id);
+            if (!inst) return;
+            currentActiveInstId = id;
+
+            document.getElementById('modal-title').textContent = inst.name;
+            document.getElementById('modal-subtitle').textContent = inst.subtitle;
+            document.getElementById('modal-category').textContent = inst.categoryName;
+            document.getElementById('modal-origin').textContent = inst.origin;
+            document.getElementById('modal-sound-prod').textContent = inst.soundProd;
+            document.getElementById('modal-history').textContent = inst.history;
+            document.getElementById('modal-facts').textContent = `"${inst.facts}"`;
+            document.getElementById('modal-icon').className = `fa-solid ${inst.icon}`;
+
+            const partsContainer = document.getElementById('modal-parts');
+            partsContainer.innerHTML = '';
+            inst.parts.forEach(p => {
+                const li = document.createElement('li');
+                li.textContent = p;
+                partsContainer.appendChild(li);
+            });
+
+            const playBoard = document.getElementById('interactive-play-board');
+            playBoard.innerHTML = '';
+            
+            if (inst.notes && inst.notes.length > 0) {
+                const infoText = document.createElement('p');
+                infoText.className = 'text-xs text-slate-400 text-center mb-2';
+                infoText.textContent = 'הקליקו על כפתורי הנגינה הבאים כדי לפרוט/לנגן על הכלי בזמן אמת:';
+                playBoard.appendChild(infoText);
+
+                const btnsGrid = document.createElement('div');
+                btnsGrid.className = 'flex flex-wrap justify-center gap-3 w-full';
+
+                inst.notes.forEach(note => {
+                    const btn = document.createElement('button');
+                    btn.className = 'string-btn bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold px-4 py-3 rounded-xl shadow-lg border border-amber-400/40 text-xs sm:text-sm flex flex-col items-center gap-1 min-w-[90px]';
+                    btn.innerHTML = `<i class="fa-solid fa-volume-high text-xs"></i> <span>${note.name}</span> <span class="text-[10px] opacity-80 font-normal">(${note.chord})</span>`;
+                    btn.onclick = () => {
+                        playSynthesizedTone(note.freq, inst.category === 'wind' ? 'triangle' : 'sine', 0.9);
+                        btn.classList.add('bg-emerald-600', 'scale-95');
+                        setTimeout(() => btn.classList.remove('bg-emerald-600', 'scale-95'), 200);
+                    };
+                    btnsGrid.appendChild(btn);
+                });
+                playBoard.appendChild(btnsGrid);
+            } else {
+                playBoard.innerHTML = '<p class="text-xs text-slate-400">כלי זה מנוגן במקצבים או במקלדת הסטודיו.</p>';
+            }
+
+            const guideContainer = document.getElementById('modal-notes-guide');
+            guideContainer.innerHTML = '';
+            const guideDisplay = document.getElementById('modal-guide-display');
+            guideDisplay.textContent = 'בחרו תו או אקורד למעלה לצפייה בהסבר.';
+
+            inst.learningItems.forEach(item => {
+                const lBtn = document.createElement('button');
