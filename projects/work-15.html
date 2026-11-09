@@ -998,3 +998,150 @@
 
             inst.learningItems.forEach(item => {
                 const lBtn = document.createElement('button');
+                lBtn.className = 'bg-slate-800 hover:bg-amber-600/40 text-amber-300 font-semibold px-3 py-2 rounded-xl text-xs border border-amber-500/30 transition flex items-center gap-2';
+                lBtn.innerHTML = `<i class="fa-solid fa-circle-dot text-[10px] text-amber-400"></i> ${item.label}`;
+                lBtn.onclick = () => {
+                    guideDisplay.innerHTML = `<strong class="text-amber-300 block mb-1">${item.label}:</strong> ${item.desc}`;
+                    if (inst.notes && inst.notes[0]) {
+                        playSynthesizedTone(inst.notes[0].freq, 'sine', 0.8);
+                    }
+                };
+                guideContainer.appendChild(lBtn);
+            });
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        let currentOctave = 4;
+        let selectedSynthSound = 'piano';
+        const keysPattern = [
+            { note: 'C', label: 'דו', keyBind: 'a', freqMultiplier: 261.63 },
+            { note: 'D', label: 'רה', keyBind: 's', freqMultiplier: 293.66 },
+            { note: 'E', label: 'מי', keyBind: 'd', freqMultiplier: 329.63 },
+            { note: 'F', label: 'פה', keyBind: 'f', freqMultiplier: 349.23 },
+            { note: 'G', label: 'סול', keyBind: 'g', freqMultiplier: 392.00 },
+            { note: 'A', label: 'לה', keyBind: 'h', freqMultiplier: 440.00 },
+            { note: 'B', label: 'סי', keyBind: 'j', freqMultiplier: 493.88 },
+            { note: 'C5', label: 'דו', keyBind: 'k', freqMultiplier: 523.25 }
+        ];
+
+        function renderStudioKeyboard() {
+            const keyboardContainer = document.getElementById('piano-keyboard');
+            if(!keyboardContainer) return;
+            keyboardContainer.innerHTML = '';
+            keysPattern.forEach((k) => {
+                const keyBtn = document.createElement('button');
+                const freq = k.freqMultiplier * Math.pow(2, currentOctave - 4);
+                keyBtn.className = 'piano-key bg-slate-100 text-slate-800 hover:bg-amber-100 rounded-b-xl flex-1 h-48 border border-slate-300 z-0 flex flex-col justify-end p-2 text-xs font-bold shadow';
+                keyBtn.innerHTML = `<span class="block">${k.label}</span><span class="text-[9px] opacity-60 uppercase">(${k.keyBind})</span>`;
+                keyBtn.onclick = () => { playSynthesizedTone(freq, selectedSynthSound === 'organ' ? 'square' : 'triangle', 1.0); };
+                keyboardContainer.appendChild(keyBtn);
+            });
+        }
+
+        function changeOctave(delta) {
+            currentOctave = Math.min(6, Math.max(2, currentOctave + delta));
+            document.getElementById('octave-display').textContent = currentOctave;
+            renderStudioKeyboard();
+        }
+
+        function changeSynthSound(val) { selectedSynthSound = val; }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            const keyMatch = keysPattern.find(k => k.keyBind === e.key.toLowerCase());
+            if (keyMatch) {
+                const freq = keyMatch.freqMultiplier * Math.pow(2, currentOctave - 4);
+                playSynthesizedTone(freq, 'triangle', 1.0);
+            }
+        });
+
+        let currentQuizIdx = 0;
+        let quizScore = 0;
+        let answered = false;
+
+        function initQuiz() {
+            currentQuizIdx = 0;
+            quizScore = 0;
+            answered = false;
+            document.getElementById('quiz-score').textContent = '0';
+            document.getElementById('quiz-result-card').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            loadQuizQuestion();
+        }
+
+        function loadQuizQuestion() {
+            answered = false;
+            const q = quizQuestions[currentQuizIdx];
+            document.getElementById('quiz-current-num').textContent = currentQuizIdx + 1;
+            document.getElementById('quiz-total-num').textContent = quizQuestions.length;
+            document.getElementById('quiz-question-text').textContent = q.question;
+
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.className = 'hidden p-4 rounded-xl text-center font-bold text-base';
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+
+            const container = document.getElementById('quiz-options-container');
+            container.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-opt-btn bg-slate-800/80 hover:bg-slate-700 text-slate-200 p-4 rounded-2xl border border-amber-500/20 text-right font-semibold transition flex items-center justify-between';
+                btn.innerHTML = `<span>${opt}</span><i class="fa-regular fa-circle text-amber-500/50"></i>`;
+                btn.onclick = () => selectQuizOption(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectQuizOption(selectedIdx) {
+            if (answered) return;
+            answered = true;
+            const q = quizQuestions[currentQuizIdx];
+            const optionBtns = document.querySelectorAll('.quiz-opt-btn');
+            const feedback = document.getElementById('quiz-feedback');
+
+            if (selectedIdx === q.correct) {
+                quizScore += 20;
+                document.getElementById('quiz-score').textContent = quizScore;
+                optionBtns[selectedIdx].classList.add('bg-emerald-700/80', 'border-emerald-500', 'text-white');
+                feedback.textContent = 'נכון מאוד! כל הכבוד 🎉';
+                feedback.className = 'p-4 rounded-xl text-center font-bold text-base bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+            } else {
+                optionBtns[selectedIdx].classList.add('bg-rose-800/80', 'border-rose-500', 'text-white');
+                optionBtns[q.correct].classList.add('bg-emerald-700/80', 'border-emerald-500', 'text-white');
+                feedback.textContent = `לא מדויק... התשובה הנכונה היא: ${q.options[q.correct]}`;
+                feedback.className = 'p-4 rounded-xl text-center font-bold text-base bg-rose-500/20 text-rose-300 border border-rose-500/30';
+            }
+            feedback.classList.remove('hidden');
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            currentQuizIdx++;
+            if (currentQuizIdx < quizQuestions.length) {
+                loadQuizQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('quiz-result-card').classList.remove('hidden');
+            document.getElementById('quiz-final-score').textContent = quizScore / 20;
+        }
+
+        function resetQuiz() { initQuiz(); }
+
+        window.onload = function() {
+            document.getElementById('count-all').textContent = instrumentsData.length;
+            renderInstruments(instrumentsData);
+            renderStudioKeyboard();
+            initQuiz();
+        };
+    </script>
+</body>
+</html>
