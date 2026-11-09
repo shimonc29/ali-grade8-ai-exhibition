@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אקדמיית ההשקעות - לוח בקרה לימודי</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 0; 
+            background-color: #f4f7f6; 
+            color: #333; 
+            font-size: 1.1rem;
+        }
+        header { 
+            background-color: #1a365d; 
+            color: white; 
+            padding: 1.5rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo { 
+            font-size: 1.8rem; 
+            font-weight: bold; 
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .search-bar {
+            padding: 0.75rem;
+            border-radius: 2rem;
+            border: none;
+            width: 250px;
+            font-size: 1rem;
+            outline: none;
+            padding-right: 1.5rem;
+        }
+        .share-btn {
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .share-btn:hover {
+            background-color: #38a169;
+        }
+        .container { 
+            max-width: 95%; 
+            margin: 2rem auto; 
+            padding: 0 1rem; 
+        }
+        .instructions-card {
+            background: #ebf8fa;
+            border: 2px solid #3182ce;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(49, 130, 206, 0.1);
+        }
+        .instructions-card h2 {
+            color: #2b6cb0;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+        .instructions-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .instructions-list li {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            border-right: 5px solid #3182ce;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        .concept-title {
+            font-weight: bold;
+            color: #2d3748;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .dashboard-top { 
+            display: grid; 
+            grid-template-columns: 1fr 2fr; 
+            gap: 2rem; 
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 992px) { 
+            .dashboard-top { grid-template-columns: 1fr; } 
+        }
+        .card { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 0.5rem; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        .index-price { 
+            font-size: 4rem; 
+            font-weight: bold; 
+            color: #2d3748; 
+            line-height: 1.2;
+        }
+        .index-change { 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            color: #48bb78; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 1rem; 
+            font-size: 1.1rem;
+        }
+        th, td { 
+            text-align: right; 
+            padding: 1.25rem 1rem; 
+            border-bottom: 1px solid #e2e8f0; 
+        }
+        th { 
+            color: #718096; 
+            font-weight: 600; 
+            background-color: #f8fafc;
+            font-size: 1.15rem;
+        }
+        tr:hover {
+            background-color: #f7fafc;
+        }
+        .stock-up { color: #48bb78; font-weight: bold; direction: ltr; text-align: right; }
+        .stock-down { color: #e53e3e; font-weight: bold; direction: ltr; text-align: right; }
+        .symbol { font-weight: bold; color: #2b6cb0; font-size: 1.2rem; }
+        
+        /* אזור תגובות */
+        .comments-section {
+            margin-top: 2rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .comments-section h3 {
+            margin-top: 0;
+            color: #2d3748;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 1rem;
+        }
+        .comment-input-area {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            margin-top: 1.5rem;
+        }
+        .comment-input-area input {
+            flex-grow: 1;
+            padding: 1rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-family: inherit;
+        }
+        .comment-input-area button {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            padding: 0 2rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .comment-input-area button:hover {
+            background-color: #2b6cb0;
+        }
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .comment-item {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            border-right: 4px solid #a0aec0;
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+        .comment-text {
+            color: #2d3748;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">אקדמיית ההשקעות - כיתה ח'</div>
+        <div class="header-actions">
+            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 חיפוש חברה או סימול...">
+            <button class="share-btn" id="shareBtn">שתף אתר 📤</button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- אזור ההוראות וההסברים לתלמידים -->
+        <div class="instructions-card">
+            <h2>🎓 הוראות למשקיע המתחיל: איך קוראים את הנתונים?</h2>
+            <ul class="instructions-list">
+                <li>
+                    <div class="concept-title">מה זה מדד ה-S&P 500?</div>
+                    תארו לעצמכם קבוצה של 500 החברות הכי גדולות ומצליחות בארצות הברית. המדד הזה מחשב את השווי של כולן ביחד, וכך עוזר לנו להבין אם הכלכלה צומחת.
+                </li>
+                <li>
+                    <div class="concept-title">מהי מניה (סימול)?</div>
+                    מניה היא כמו חתיכה קטנה של פאזל מהחברה. לכל חברה יש "שם קיצור" קטן באנגלית שנקרא סימול (למשל: AAPL לאפל).
+                </li>
+                <li>
+                    <div class="concept-title">מחיר ושינוי יומי (ירוק/אדום)</div>
+                    המחיר מראה כמה דולרים עולה לקנות מניה אחת עכשיו. האחוזים בצד מראים אם המחיר עלה היום (בירוק 🟢) או ירד (באדום 🔴) לעומת אתמול.
+                </li>
+            </ul>
+        </div>
+
+        <div class="dashboard-top">
+            <div class="card">
+                <h2>מדד ה-S&P 500 הכללי</h2>
+                <p>מצב השוק היום:</p>
+                <div>
+                    <div class="index-price">5,214.08</div>
+                    <div class="index-change">+42.15 (0.82%) 🟢</div>
+                </div>
+                <p style="color: #718096; margin-top: 1rem; line-height: 1.5;">
+                    הגרף משמאל מראה את המסע של המדד מתחילת יום הלימודים. כשהקו עולה, משקיעים מרוויחים כסף.
+                </p>
+            </div>
+            
+            <div class="card">
+                <canvas id="sp500Chart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>טבלת החברות (חפשו חברות בשורת החיפוש למעלה)</h2>
+            <div style="overflow-x: auto;">
+                <table id="stocksTable">
+                    <thead>
+                        <tr>
+                            <th>סימול</th>
+                            <th>שם החברה</th>
+                            <th>מחיר מניה ($)</th>
+                            <th>שינוי היום (%)</th>
+                            <th>שווי שוק כולל</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="symbol">MSFT</td>
+                            <td>מיקרוסופט (Microsoft)</td>
+                            <td>417.88</td>
+                            <td class="stock-up">+0.95%</td>
+                            <td dir="ltr">$3.12 טריליון</td>
+                        </tr>
+                        <tr>
+                            <td class="symbol">AAPL</td>
+                            <td>אפל (Apple)</td>
+                            <td>173.50</td>
+                            <td class="stock-up">+1.20%</td>
+                            <td dir="ltr">$2.68 טריליון</td>
+                        </tr>
+                        <tr>
+                            <td class="symbol">NVDA</td>
+                            <td>אנבידיה (NVIDIA)</td>
+                            <td>880.08</td>
+                            <td class="stock-down">-0.50%</td>
+                            <td dir="ltr">$2.20 טריליון</td>
+                        </tr>
+                        <tr>
+                            <td class="symbol">AMZN</td>
+                            <td>אמזון (Amazon)</td>
+                            <td>178.15</td>
+                            <td class="stock-up">+1.85%</td>
+                            <td dir="ltr">$1.85 טריליון</td>
+                        </tr>
+                        <tr>
+                            <td class="symbol">GOOGL</td>
+                            <td>גוגל (Alphabet)</td>
+                            <td>154.09</td>
+                            <td class="stock-up">+0.45%</td>
+                            <td dir="ltr">$1.92 טריליון</td>
+                        </tr>
+                        <tr>
+                            <td class="symbol">META</td>
+                            <td>מטא / פייסבוק (Meta)</td>
+                            <td>495.20</td>
+                            <td class="stock-up">+2.10%</td>
+                            <td dir="ltr">$1.26 טריליון</td>
+                        </tr>
+                        <tr>
+                            <td class="symbol">TSLA</td>
+                            <td>טסלה (Tesla)</td>
+                            <td>175.34</td>
+                            <td class="stock-down">-1.25%</td>
+                            <td dir="ltr">$558 מיליארד</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- אזור התגובות -->
+        <div class="comments-section">
+            <h3>💬 דיון כיתתי - מה דעתכם על השוק היום?</h3>
+            <div class="comment-input-area">
+                <input type="text" id="commentInput" placeholder="כתבו את דעתכם או שאלה לכיתה..." onkeypress="handleKeyPress(event)">
+                <button onclick="addComment()">שלח תגובה</button>
+            </div>
+            <div class="comments-list" id="commentsList">
+                <!-- תגובות לדוגמה -->
+                <div class="comment-item">
+                    <div class="comment-author">תלמיד/ה אנונימי/ת • לפני 5 דקות</div>
+                    <p class="comment-text">למה המניה של טסלה ירדה היום בזמן שכל השאר עלו?</p>
+                </div>
+                <div class="comment-item">
+                    <div class="comment-author">תלמיד/ה אנונימי/ת • לפני 12 דקות</div>
+                    <p class="comment-text">מעניין לראות שאמזון וגוגל שוות כמעט אותו הדבר!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // יצירת הגרף
+        const ctx = document.getElementById('sp500Chart').getContext('2d');
+        const sp500Chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['09:30', '10:30', '11:30', '12:30', '13:30', '14:30', '15:30', '16:00'],
+                datasets: [{
+                    label: 'נקודות',
+                    data: [5180, 5195, 5190, 5205, 5198, 5210, 5208, 5214],
+                    borderColor: '#3182ce',
+                    backgroundColor: 'rgba(49, 130, 206, 0.1)',
+                    borderWidth: 4,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 5150, max: 5250 }
+                }
+            }
+        });
+
+        // פונקציית חיפוש בטבלה
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            let filter = this.value.toUpperCase();
+            let rows = document.querySelectorAll('#stocksTable tbody tr');
+            
+            rows.forEach(row => {
+                let text = row.innerText.toUpperCase();
+                if (text.indexOf(filter) > -1) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+
+        // פונקציית שיתוף האתר
+        document.getElementById('shareBtn').addEventListener('click', async () => {
+            const shareData = {
+                title: 'אקדמיית ההשקעות',
+                text: 'בואו לראות את לוח הבקרה שבנינו ללימוד שוק ההון!',
+                url: window.location.href
+            };
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else {
+                    alert('הקישור הועתק! (פונקציית שיתוף נתמכת בניידים או בדפדפנים מסוימים)');
+                }
+            } catch (err) {
+                console.log('שגיאה בשיתוף: ' + err);
+            }
+        });
+
+        // הוספת תגובה חדשה לדיון
+        function addComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            
+            if (text !== "") {
+                const commentsList = document.getElementById('commentsList');
+                const newComment = document.createElement('div');
+                newComment.className = 'comment-item';
+                newComment.innerHTML = `
+                    <div class="comment-author">תלמיד/ה אנונימי/ת • ממש עכשיו</div>
+                    <p class="comment-text">${text}</p>
+                `;
+                
+                // מוסיף את התגובה החדשה בראש הרשימה
+                commentsList.insertBefore(newComment, commentsList.firstChild);
+                input.value = ""; // מרוקן את שדה הטקסט
+            }
+        }
+
+        // שליחת תגובה בלחיצה על Enter
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                addComment();
+            }
+        }
+    </script>
+</body>
+</html>
