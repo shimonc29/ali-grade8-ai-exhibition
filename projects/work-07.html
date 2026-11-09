@@ -998,3 +998,107 @@
                 }
             });
             items = items.filter(i => !i.collected);
+
+            enemies.forEach(enemy => {
+                enemy.update(worldMap);
+
+                if (!enemy.alive || enemy.squished) return;
+
+                if (isColliding(player.getBounds(), enemy.getBounds())) {
+                    if (player.vy > 0 && (player.y + player.height - player.vy) <= enemy.y + 12) {
+                        const success = enemy.squish();
+                        if (success) {
+                            player.vy = -7;
+                            score += 200;
+                            updateUI();
+                        } else {
+                            playerHurt();
+                        }
+                    } else {
+                        playerHurt();
+                    }
+                }
+            });
+
+            particles.forEach(p => p.update());
+            particles = particles.filter(p => p.life > 0);
+
+            // Level complete flag trigger
+            const endFlagX = (110 + currentSubLevel * 30) * TILE_SIZE;
+            if (player.x >= endFlagX) {
+                nextLevel();
+            }
+        }
+
+        function drawBackground() {
+            // Authentic NES Light Blue Sky (matching image_3a9e5a.png)
+            ctx.fillStyle = '#9290ff';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            // NES Pixel Art Fluffy Clouds (with outlines matching screenshot)
+            for (let i = 0; i < 8; i++) {
+                let cloudX = (i * 260) - (cameraX * 0.2) % 260;
+                ctx.save();
+                ctx.translate(cloudX, 50 + (i % 2) * 30);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.arc(20, 20, 16, 0, Math.PI * 2);
+                ctx.arc(40, 15, 20, 0, Math.PI * 2);
+                ctx.arc(60, 20, 16, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Green Bushes on the Ground
+            ctx.fillStyle = '#22c55e';
+            for (let i = 0; i < 6; i++) {
+                let bushX = (i * 350) - (cameraX) % 350;
+                ctx.beginPath();
+                ctx.arc(bushX, GAME_HEIGHT - TILE_SIZE * 2 - 6, 16, Math.PI, 0, false);
+                ctx.arc(bushX + 18, GAME_HEIGHT - TILE_SIZE * 2 - 10, 20, Math.PI, 0, false);
+                ctx.arc(bushX + 36, GAME_HEIGHT - TILE_SIZE * 2 - 6, 16, Math.PI, 0, false);
+                ctx.fill();
+            }
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            drawBackground();
+            lakitus.forEach(l => l.draw(ctx));
+            worldMap.draw(ctx);
+            items.forEach(i => i.draw(ctx));
+            enemies.forEach(e => e.draw(ctx));
+            player.draw(ctx);
+            particles.forEach(p => p.draw(ctx));
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            Sound.init();
+            document.getElementById('overlay').classList.add('hidden');
+            if (gameState === 'GAMEOVER') {
+                initGame();
+            } else if (gameState === 'LEVEL_WIN') {
+                loadLevel(currentWorld, currentSubLevel);
+            }
+            gameState = 'PLAYING';
+        });
+
+        window.onload = () => {
+            initGame();
+            gameLoop();
+        };
+    </script>
+</body>
+</html>
