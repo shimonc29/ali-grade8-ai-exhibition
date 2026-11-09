@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מנהל תקציב אישי</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-700 text-white shadow-lg">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fa-solid font-sharp fa-wallet"></i> מעקב תקציב אישי
+            </h1>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleInstructions()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+                    <i class="fa-solid fa-circle-info"></i> הוראות שימוש
+                </button>
+                <div id="dateDisplay" class="text-sm opacity-80 hidden sm:block"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Instructions Modal (Fixed Overlay) -->
+    <div id="instructionsPanel" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target === this) toggleInstructions()">
+        <div class="bg-white text-slate-800 p-6 rounded-2xl shadow-2xl max-w-2xl w-full relative border border-slate-100">
+            <button onclick="toggleInstructions()" class="absolute top-4 left-4 text-slate-400 hover:text-slate-600 p-1 transition cursor-pointer">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <h2 class="text-xl font-bold mb-4 text-indigo-700 flex items-center gap-2 border-b pb-3">
+                <i class="fa-solid fa-book-open"></i> הוראות שימוש באפליקציה
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <h3 class="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-indigo-600 text-white text-xs rounded-full flex items-center justify-center inline-block">1</span>
+                        הוספת תנועה
+                    </h3>
+                    <p class="text-slate-600 leading-relaxed text-xs">בחר סוג (הכנסה/הוצאה), הזן תיאור, סכום, קטגוריה ופרטי תשלום, ולחץ על "שמור תנועה".</p>
+                </div>
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <h3 class="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-indigo-600 text-white text-xs rounded-full flex items-center justify-center inline-block">2</span>
+                        סל סינון וזמנים
+                    </h3>
+                    <p class="text-slate-600 leading-relaxed text-xs">סנן את ההיסטוריה לפי טווחי זמן (חודש שעבר, שנה שעברה וכו') לצפייה בנתונים מעודכנים.</p>
+                </div>
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <h3 class="font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-indigo-600 text-white text-xs rounded-full flex items-center justify-center inline-block">3</span>
+                        ייצוא לאקסל
+                    </h3>
+                    <p class="text-slate-600 leading-relaxed text-xs">לחץ על "לייצוא לאקסל" להורדת קובץ CSV מסודר עם כל הנתונים ישירות למחשב.</p>
+                </div>
+            </div>
+            <div class="text-left">
+                <button onclick="toggleInstructions()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-lg text-sm transition cursor-pointer">
+                    הבנתי, תודה
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Top Summary Cards (Full Width Span) -->
+        <div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Total Income Card -->
+            <div class="bg-white p-5 rounded-xl shadow-md border-r-4 border-emerald-500">
+                <div class="flex justify-between items-center text-slate-500 mb-1">
+                    <span class="text-sm font-medium">סך הכנסות</span>
+                    <i class="fa-solid fa-arrow-down text-emerald-500"></i>
+                </div>
+                <div id="totalIncome" class="text-2xl font-bold text-emerald-600">₪0.00</div>
+            </div>
+
+            <!-- Total Expenses Card -->
+            <div class="bg-white p-5 rounded-xl shadow-md border-r-4 border-rose-500">
+                <div class="flex justify-between items-center text-slate-500 mb-1">
+                    <span class="text-sm font-medium">סך הוצאות</span>
+                    <i class="fa-solid fa-arrow-up text-rose-500"></i>
+                </div>
+                <div id="totalExpense" class="text-2xl font-bold text-rose-600">₪0.00</div>
+            </div>
+
+            <!-- Net Balance Card -->
+            <div class="bg-white p-5 rounded-xl shadow-md border-r-4 border-indigo-500">
+                <div class="flex justify-between items-center text-slate-500 mb-1">
+                    <span class="text-sm font-medium">יתרה נטו</span>
+                    <i class="fa-solid fa-scale-balanced text-indigo-500"></i>
+                </div>
+                <div id="netBalance" class="text-2xl font-bold text-indigo-700">₪0.00</div>
+            </div>
+        </div>
+
+        <!-- Left Column: Form & Add Operations -->
+        <section class="bg-white p-6 rounded-xl shadow-md h-fit">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 text-slate-700">הוספת תנועה חדשה</h2>
+            <form id="transactionForm" class="space-y-4">
+                <!-- Type Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">סוג תנועה</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="btnIncome" onclick="setType('income')" 
+                            class="py-2 rounded-lg font-semibold text-sm border border-emerald-500 bg-emerald-50 text-emerald-700 transition-colors">
+                            הכנסה
+                        </button>
+                        <button type="button" id="btnExpense" onclick="setType('expense')" 
+                            class="py-2 rounded-lg font-semibold text-sm border border-slate-200 text-slate-600 transition-colors">
+                            הוצאה
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Description Input -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-slate-600 mb-1">תיאור</label>
+                    <input type="text" id="description" required placeholder="למשל: משכורת, סופר, דלק..." 
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <!-- Amount Input -->
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-slate-600 mb-1">סכום (₪)</label>
+                    <input type="number" id="amount" required step="0.01" min="0" placeholder="0.00" 
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <!-- Category Input -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-slate-600 mb-1">קטגוריה</label>
+                    <select id="category" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <!-- Options dynamically populated based on income/expense type -->
+                    </select>
+                </div>
+
+                <!-- Payment Method Input -->
+                <div>
+                    <label for="paymentMethod" class="block text-sm font-medium text-slate-600 mb-1">אמצעי תשלום / קבלה</label>
+                    <select id="paymentMethod" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="כרטיס אשראי">כרטיס אשראי</option>
+                        <option value="העברה בנקאית">העברה בנקאית</option>
+                        <option value="מזומן">מזומן</option>
+                        <option value="צ'ק">צ'ק</option>
+                    </select>
+                </div>
+
+                <!-- Status Input -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-slate-600 mb-1">סטטוס תשלום</label>
+                    <select id="status" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="בוצע">בוצע / התקבל</option>
+                        <option value="ממתין">ממתין לביצוע</option>
+                    </select>
+                </div>
+
+                <!-- Notes Input -->
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-slate-600 mb-1">הערות / פרטים נוספים</label>
+                    <textarea id="notes" rows="2" placeholder="הערות אופציונליות..." 
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition duration-200">
+                    שמור תנועה
+                </button>
+            </form>
+        </section>
+
+        <!-- Right Column: Visual Charts & Transaction List -->
+        <section class="md:col-span-2 space-y-6">
+            
+            <!-- NEW: Budget Management & Category Targets -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-indigo-600"></i> ניהול ותכנון תקציב חודשי
+                    </h2>
+                    <span class="text-xs text-slate-400">הגדרת יעדי הוצאה מקסימליים</span>
+                </div>
+                
+                <!-- Category Budget Settings Form -->
+                <form id="budgetGoalForm" class="flex flex-wrap sm:flex-nowrap gap-2 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <select id="goalCategory" class="text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-1/2 bg-white">
+                        <!-- Populated dynamically with expense categories -->
+                    </select>
+                    <input type="number" id="goalAmount" min="1" step="10" placeholder="יעד תקציב (₪)" required class="text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-1/3 bg-white">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shrink-0 w-full sm:w-auto">
+                        עדכן יעד
+                    </button>
+                </form>
+
+                <!-- Budget Progress Bars Container -->
+                <div id="budgetProgressList" class="space-y-4">
+                    <!-- Dynamic Progress Bars Rendered Here -->
+                </div>
+            </div>
+
+            <!-- Category Chart Card -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-slate-700">תפלגות הוצאות לפי קטגוריה</h2>
+                <div class="relative max-h-64 flex justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Transaction History Card -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4 border-b pb-3">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-lg font-bold text-slate-700">היסטוריית תנועות</h2>
+                        <!-- Date Filter Dropdown -->
+                        <select id="timeFilter" onchange="renderApp()" class="text-xs bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">כל הזמנים</option>
+                            <option value="week">השבוע האחרון</option>
+                            <option value="lastMonth">החודש שעבר</option>
+                            <option value="lastYear">השנה שעברה</option>
+                            <option value="last10Years">10 השנים האחרונות</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="exportToExcel()" class="text-xs text-indigo-600 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-file-excel"></i> לייצוא לאקסל
+                        </button>
+                        <button onclick="clearAllTransactions()" class="text-xs text-rose-500 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> נקה הכל
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter / List Container -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="text-xs font-semibold text-slate-500 border-b">
+                                <th class="py-2">תאריך</th>
+                                <th class="py-2">תיאור</th>
+                                <th class="py-2">קטגוריה</th>
+                                <th class="py-2">אמצעי תשלום</th>
+                                <th class="py-2">סטטוס</th>
+                                <th class="py-2">סכום</th>
+                                <th class="py-2 text-center">פעולה</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionList" class="divide-y text-sm">
+                            <!-- Transactions rendered dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State Message -->
+                <div id="emptyState" class="text-center py-8 text-slate-400">
+                    <i class="fa-solid fa-receipt text-3xl mb-2"></i>
+                    <p>אין תנועות להצגה בטווח הזמן שנבחר.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Notification Box -->
+    <div id="notification" class="fixed bottom-4 left-4 bg-slate-800 text-white px-4 py-3 rounded-lg shadow-xl hidden transition-all duration-300">
+        <span id="notificationMessage">הודעה</span>
+    </div>
+
+    <script>
+        // Data State
+        let transactions = JSON.parse(localStorage.getItem('budget_transactions')) || [];
+        let categoryGoals = JSON.parse(localStorage.getItem('budget_category_goals')) || {
+            "מזון וקניות": 2000,
+            "חשבונות ודיור": 3500,
+            "תחבורה ורכב": 1000,
+            "פנאי ובילוי": 800
+        };
+        let currentType = 'income';
+        let chartInstance = null;
+
+        const incomeCategories = [
+            "משכורת",
+            "עסק / עצמאי",
+            "השקעות / תשואה",
+            "מתנה / מענק",
+            "החזר כספי",
+            "שונות (הכנסה)"
+        ];
+
+        const expenseCategories = [
+            "מזון וקניות",
+            "חשבונות ודיור",
+            "תחבורה ורכב",
+            "פנאי ובילוי",
+            "בריאות ורפואה",
+            "חינוך ולימודים",
+            "שונות (הוצאה)"
+        ];
+
+        // Update category select options based on transaction type
+        function updateCategoryOptions() {
+            const categorySelect = document.getElementById('category');
+            if (categorySelect) {
+                categorySelect.innerHTML = '';
+                const categories = currentType === 'income' ? incomeCategories : expenseCategories;
+                
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    categorySelect.appendChild(opt);
+                });
+            }
+
+            // Also populate the budget goal category select box
+            const goalCategorySelect = document.getElementById('goalCategory');
+            if (goalCategorySelect) {
+                goalCategorySelect.innerHTML = '';
+                expenseCategories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    goalCategorySelect.appendChild(opt);
+                });
+            }
+        }
+
+        // Toggle Instructions Panel
+        function toggleInstructions() {
+            const panel = document.getElementById('instructionsPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        // Export Transactions Data to Excel (CSV with UTF-8 BOM for Hebrew)
+        function exportToExcel() {
+            if (transactions.length === 0) {
+                showNotification('אין תנועות לייצוא');
+                return;
+            }
+
+            // CSV Header
+            let csvContent = "\uFEFF"; // UTF-8 BOM so Excel opens Hebrew properly
+            csvContent += "תאריך,סוג תנועה,תיאור,קטגוריה,אמצעי תשלום,סטטוס,הערות,סכום (ש\"ח)\n";
+
+            // Add Rows
+            transactions.forEach(t => {
+                const typeText = t.type === 'income' ? 'הכנסה' : 'הוצאה';
+                const dateStr = new Date(t.date || t.id).toLocaleDateString('he-IL');
+                const description = `"${(t.description || '').replace(/"/g, '""')}"`;
+                const category = `"${(t.category || '').replace(/"/g, '""')}"`;
+                const paymentMethod = `"${(t.paymentMethod || 'לא צוין').replace(/"/g, '""')}"`;
+                const status = `"${(t.status || 'בוצע').replace(/"/g, '""')}"`;
+                const notes = `"${(t.notes || '').replace(/"/g, '""')}"`;
+                const amount = t.amount;
+                
+                csvContent += `${dateStr},${typeText},${description},${category},${paymentMethod},${status},${notes},${amount}\n`;
+            });
+
+            // Create Download Link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", url);
+            downloadAnchor.setAttribute("download", `דוח_תקציב_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            
+            showNotification('הקובץ יוצא בהצלחה בפורמט אקסל');
+        }
+
+        // On DOM Load Setup
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            updateCategoryOptions();
+            renderApp();
+
+            // Set up budget goal form handler
+            document.getElementById('budgetGoalForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const cat = document.getElementById('goalCategory').value;
+                const goalVal = parseFloat(document.getElementById('goalAmount').value);
+                
+                if (cat && !isNaN(goalVal) && goalVal > 0) {
+                    categoryGoals[cat] = goalVal;
+                    localStorage.setItem('budget_category_goals', JSON.stringify(categoryGoals));
+                    document.getElementById('goalAmount').value = '';
+                    renderApp();
+                    showNotification(`יעד התקציב עבור "${cat}" עודכן בהצלחה!`);
+                }
+            });
+        });
+
+        // Set Income/Expense Mode
+        function setType(type) {
+            currentType = type;
+            const btnIncome = document.getElementById('btnIncome');
+            const btnExpense = document.getElementById('btnExpense');
+
+            if (type === 'income') {
+                btnIncome.className = "py-2 rounded-lg font-semibold text-sm border border-emerald-500 bg-emerald-50 text-emerald-700 transition-colors";
+                btnExpense.className = "py-2 rounded-lg font-semibold text-sm border border-slate-200 text-slate-600 transition-colors";
+            } else {
+                btnExpense.className = "py-2 rounded-lg font-semibold text-sm border border-rose-500 bg-rose-50 text-rose-700 transition-colors";
+                btnIncome.className = "py-2 rounded-lg font-semibold text-sm border border-slate-200 text-slate-600 transition-colors";
+            }
+
+            updateCategoryOptions();
+        }
+
+        // Form Submit Handler
+        document.getElementById('transactionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const description = document.getElementById('description').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            const status = document.getElementById('status').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!description || isNaN(amount) || amount <= 0) {
+                showNotification('אנא הזן תיאור וסכום תקין');
+                return;
+            }
+
+            const item = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                type: currentType,
+                description,
+                amount,
+                category,
+                paymentMethod,
+                status,
+                notes
+            };
+
+            transactions.push(item);
+            saveAndRefresh();
+            
+            // Reset inputs
+            document.getElementById('description').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('notes').value = '';
+            showNotification('תנועה נוספה בהצלחה!');
+        });
+
+        // Helper to filter transactions based on selected timeframe
+        function getFilteredTransactions() {
+            const filter = document.getElementById('timeFilter')?.value || 'all';
+            if (filter === 'all') return transactions;
+
+            const now = new Date();
+
+            return transactions.filter(t => {
+                const tDate = new Date(t.date || t.id);
+
+                if (filter === 'week') {
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(now.getDate() - 7);
+                    return tDate >= oneWeekAgo && tDate <= now;
+                }
+
+                if (filter === 'lastMonth') {
+                    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                    return tDate >= firstDayLastMonth && tDate <= lastDayLastMonth;
+                }
+
+                if (filter === 'lastYear') {
+                    const lastYear = now.getFullYear() - 1;
+                    return tDate.getFullYear() === lastYear;
+                }
+
+                if (filter === 'last10Years') {
+                    const tenYearsAgo = new Date();
+                    tenYearsAgo.setFullYear(now.getFullYear() - 10);
+                    return tDate >= tenYearsAgo && tDate <= now;
+                }
+
+                return true;
+            });
+        }
+
+        // Save & Refresh Cycle
+        function saveAndRefresh() {
+            localStorage.setItem('budget_transactions', JSON.stringify(transactions));
+            renderApp();
+        }
+
+        // Main Render Function
+        function renderApp() {
+            const filtered = getFilteredTransactions();
+            renderSummary(filtered);
+            renderBudgetProgress(filtered);
+            renderList(filtered);
+            renderChart(filtered);
+        }
+
+        // Render Budget Management Progress Bars
+        function renderBudgetProgress(filtered) {
+            const container = document.getElementById('budgetProgressList');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            // Calculate spent per expense category from filtered items
+            const expenseItems = filtered.filter(t => t.type === 'expense');
+            const spentMap = {};
+
+            expenseItems.forEach(t => {
+                spentMap[t.category] = (spentMap[t.category] || 0) + t.amount;
+            });
+
+            const trackedCategories = Object.keys(categoryGoals);
+
+            if (trackedCategories.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">לא הגדרת יעדי תקציב עדיין.</p>';
+                return;
+            }
+
+            trackedCategories.forEach(cat => {
+                const goal = categoryGoals[cat];
+                const spent = spentMap[cat] || 0;
+                const percent = Math.min(Math.round((spent / goal) * 100), 100);
+                
+                let barColor = 'bg-emerald-500';
+                let textColor = 'text-emerald-700';
+
+                if (spent > goal) {
+                    barColor = 'bg-rose-500';
+                    textColor = 'text-rose-600 font-bold';
+                } else if (percent >= 80) {
+                    barColor = 'bg-amber-500';
+                    textColor = 'text-amber-700';
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-slate-50 p-3 rounded-lg border border-slate-100 text-xs";
+                itemDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="font-semibold text-slate-700">${cat}</span>
+                        <span class="${textColor}">
+                            ₪${spent.toLocaleString('he-IL')} מתוך ₪${goal.toLocaleString('he-IL')} (${percent}%)
+                            ${spent > goal ? '<i class="fa-solid fa-triangle-exclamation mr-1 text-rose-500" title="חריגה מהתקציב!"></i>' : ''}
+                        </span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        // Calculate Totals based on filtered transactions
+        function renderSummary(filtered) {
+            const income = filtered
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const expense = filtered
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const net = income - expense;
+
+            document.getElementById('totalIncome').textContent = `₪${income.toLocaleString('he-IL', { minimumFractionDigits: 2 })}`;
+            document.getElementById('totalExpense').textContent = `₪${expense.toLocaleString('he-IL', { minimumFractionDigits: 2 })}`;
+            
+            const netElem = document.getElementById('netBalance');
+            netElem.textContent = `₪${net.toLocaleString('he-IL', { minimumFractionDigits: 2 })}`;
+            netElem.className = `text-2xl font-bold ${net >= 0 ? 'text-indigo-700' : 'text-rose-600'}`;
+        }
+
+        // Render History Table using filtered data
+        function renderList(filtered) {
+            const listElem = document.getElementById('transactionList');
+            const emptyElem = document.getElementById('emptyState');
+
+            listElem.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyElem.classList.remove('hidden');
+                return;
+            } else {
+                emptyElem.classList.add('hidden');
+            }
+
+            // Render items in reverse chronological order
+            [...filtered].reverse().forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                const isIncome = t.type === 'income';
+                const colorClass = isIncome ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold';
+                const prefix = isIncome ? '+' : '-';
+                const dateStr = new Date(t.date || t.id).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                const statusBadge = (t.status === 'ממתין') 
+                    ? '<span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full">ממתין</span>'
+                    : '<span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full">בוצע</span>';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-2 text-xs text-slate-400">${dateStr}</td>
+                    <td class="py-3 px-2 font-medium">
+                        ${t.description}
+                        ${t.notes ? `<div class="text-xs text-slate-400 font-normal">${t.notes}</div>` : ''}
+                    </td>
+                    <td class="py-3 px-2 text-slate-500">${t.category}</td>
+                    <td class="py-3 px-2 text-xs text-slate-500">${t.paymentMethod || 'כרטיס אשראי'}</td>
+                    <td class="py-3 px-2">${statusBadge}</td>
+                    <td class="py-3 px-2 ${colorClass}">${prefix}₪${t.amount.toLocaleString('he-IL')}</td>
+                    <td class="py-3 px-2 text-center">
+                        <button onclick="deleteTransaction(${t.id})" class="text-slate-400 hover:text-rose-500 transition-colors">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                listElem.appendChild(tr);
+            });
+        }
+
+        // Update Expenses Doughnut Chart using filtered data
+        function renderChart(filtered) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            // Filter expenses only for chart visualization
+            const expenseItems = filtered.filter(t => t.type === 'expense');
+
+            // Aggregate by category
+            const categoriesMap = {};
+            expenseItems.forEach(t => {
+                categoriesMap[t.category] = (categoriesMap[t.category] || 0) + t.amount;
+            });
+
+            const labels = Object.keys(categoriesMap);
+            const data = Object.values(categoriesMap);
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            if (data.length === 0) {
+                return;
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#f43f5e', '#3b82f6', '#eab308', 
+                            '#10b981', '#8b5cf6', '#64748b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: { family: 'Segoe UI' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Custom Notification Pop-up
+        function showNotification(msg) {
+            const notif = document.getElementById('notification');
+            const notifMsg = document.getElementById('notificationMessage');
+            
+            notifMsg.textContent = msg;
+            notif.classList.remove('hidden');
+
+            setTimeout(() => {
+                notif.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
