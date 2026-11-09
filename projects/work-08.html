@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Tank Battle - Laser & Pattern Skins Edition</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            user-select: none;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .player-hud {
+            position: absolute;
+            top: 15px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            border-radius: 8px;
+            border: 1px solid #444;
+            font-size: 15px;
+            direction: ltr;
+            z-index: 5;
+        }
+
+        #hud-p1 { left: 15px; }
+        #hud-p2 { right: 15px; }
+
+        .bar-container {
+            width: 180px;
+            height: 14px;
+            background: #222;
+            border: 1px solid #666;
+            border-radius: 7px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .bar-fill {
+            width: 100%;
+            height: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .effect-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            margin-right: 3px;
+            font-weight: bold;
+        }
+
+        .shop-btn-ui {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .modal-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            z-index: 10;
+        }
+
+        .hidden { display: none !important; }
+
+        .setup-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .player-setup-box {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            padding: 20px;
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .option-group {
+            margin: 12px 0;
+            text-align: right;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        select, button.buy-item-btn {
+            width: 100%;
+            padding: 8px;
+            background: #282828;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button.buy-item-btn {
+            background: #4caf50;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        button.buy-item-btn:hover { background: #45a049; }
+
+        .btn {
+            background: #ff4400;
+            color: #fff;
+            border: none;
+            padding: 12px 35px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:hover {
+            background: #ff6600;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- HUD Player 1 -->
+        <div id="hud-p1" class="player-hud">
+            <div style="color: #4caf50;"><strong>PLAYER 1 (WASD + SPACE)</strong></div>
+            <div class="bar-container"><div id="hp-p1" class="bar-fill" style="background:#00ff00;"></div></div>
+            <div class="bar-container" style="height:6px; margin-top:3px;"><div id="reload-p1" class="bar-fill" style="background:#00aaff;"></div></div>
+            <div style="margin-top:6px;">Score: <span id="score-p1">0</span> | Cash: $<span id="cash-p1">0</span></div>
+            <div id="effects-p1"></div>
+            <button class="shop-btn-ui" onclick="openShop()">פתח חנות</button>
+        </div>
+
+        <!-- HUD Player 2 -->
+        <div id="hud-p2" class="player-hud">
+            <div style="color: #ff9800;"><strong>PLAYER 2 (ARROWS + ENTER)</strong></div>
+            <div class="bar-container"><div id="hp-p2" class="bar-fill" style="background:#00ff00;"></div></div>
+            <div class="bar-container" style="height:6px; margin-top:3px;"><div id="reload-p2" class="bar-fill" style="background:#00aaff;"></div></div>
+            <div style="margin-top:6px;">Score: <span id="score-p2">0</span> | Cash: $<span id="cash-p2">0</span></div>
+            <div id="effects-p2"></div>
+            <button class="shop-btn-ui" onclick="openShop()">פתח חנות</button>
+        </div>
+
+        <!-- Lobby & Shop Screen -->
+        <div id="lobby-screen" class="modal-screen">
+            <h1>קרב טנקים - מהדורת לייזר וסקינים זזים</h1>
+            <p>קופסת היעלמות מעניקה קרן לייזר רציפה! נוספו סקינים מנומרים ומפופסים זזים בחנות.</p>
+            
+            <div class="setup-container">
+                <!-- Player 1 Shop Box -->
+                <div class="player-setup-box" style="border-color: #4caf50;">
+                    <h3 style="color: #4caf50;">שחקן 1 (כסף: $<span id="shop-cash-p1">0</span>)</h3>
+                    
+                    <div class="option-group">
+                        <label>גוף טנק:</label>
+                        <select id="p1-body" onchange="updatePlayerConfig(1)">
+                            <option value="balanced">מאוזן (חיים: 100)</option>
+                            <option value="light">קליל (חיים: 70 | מהיר)</option>
+                            <option value="heavy">משוריין (חיים: 160 | כבד)</option>
+                            <option value="titan" id="opt-p1-titan" disabled>טיטאן (חיים: 220) - $300</option>
+                        </select>
+                        <button class="buy-item-btn" onclick="buyItem(1, 'titan', 300, 'body')">קנה גוף טיטאן ($300)</button>
+                    </div>
+
+                    <div class="option-group">
+                        <label>נשק:</label>
+                        <select id="p1-weapon" onchange="updatePlayerConfig(1)">
+                            <option value="cannon">תותח סטנדרטי</option>
+                            <option value="rapid">מקלאע מהיר</option>
+                            <option value="sniper">תותח כבד</option>
+                            <option value="plasma" id="opt-p1-plasma" disabled>תותח פלזמה - $250</option>
+                        </select>
+                        <button class="buy-item-btn" onclick="buyItem(1, 'plasma', 250, 'weapon')">קנה נשק פלזמה ($250)</button>
+                    </div>
+
+                    <div class="option-group">
+                        <label>צבע / טקסטורה זזה:</label>
+                        <select id="p1-skin" onchange="updatePlayerConfig(1)">
+                            <option value="green">ירוק צבאי</option>
+                            <option value="leopard" id="opt-p1-leopard" disabled>מנומר זז - $220</option>
+                            <option value="stripes" id="opt-p1-stripes" disabled>פסים זזים - $180</option>
+                            <option value="rainbow" id="opt-p1-rainbow" disabled>צבע קשת מסתובב - $150</option>
+                            <option value="pulse" id="opt-p1-pulse" disabled>אור פועם ניאון - $200</option>
+                        </select>
+                        <button class="buy-item-btn" onclick="buyItem(1, 'leopard', 220, 'skin')">קנה סקין מנומר ($220)</button>
+                        <button class="buy-item-btn" onclick="buyItem(1, 'stripes', 180, 'skin')">קנה סקין פסים ($180)</button>
+                        <button class="buy-item-btn" onclick="buyItem(1, 'rainbow', 150, 'skin')">קנה צבע קשת ($150)</button>
+                        <button class="buy-item-btn" onclick="buyItem(1, 'pulse', 200, 'skin')">קנה ניאון פועם ($200)</button>
+                    </div>
+                </div>
+
+                <!-- Player 2 Shop Box -->
+                <div class="player-setup-box" style="border-color: #ff9800;">
+                    <h3 style="color: #ff9800;">שחקן 2 (כסף: $<span id="shop-cash-p2">0</span>)</h3>
+                    
+                    <div class="option-group">
+                        <label>גוף טנק:</label>
+                        <select id="p2-body" onchange="updatePlayerConfig(2)">
+                            <option value="balanced">מאוזן (חיים: 100)</option>
+                            <option value="light">קליל (חיים: 70 | מהיר)</option>
+                            <option value="heavy">משוריין (חיים: 160 | כבד)</option>
+                            <option value="titan" id="opt-p2-titan" disabled>טיטאן (חיים: 220) - $300</option>
+                        </select>
+                        <button class="buy-item-btn" onclick="buyItem(2, 'titan', 300, 'body')">קנה גוף טיטאן ($300)</button>
+                    </div>
+
+                    <div class="option-group">
+                        <label>נשק:</label>
+                        <select id="p2-weapon" onchange="updatePlayerConfig(2)">
+                            <option value="cannon">תותח סטנדרטי</option>
+                            <option value="rapid">מקלאע מהיר</option>
+                            <option value="sniper">תותח כבד</option>
+                            <option value="plasma" id="opt-p2-plasma" disabled>תותח פלזמה - $250</option>
+                        </select>
+                        <button class="buy-item-btn" onclick="buyItem(2, 'plasma', 250, 'weapon')">קנה נשק פלזמה ($250)</button>
+                    </div>
+
+                    <div class="option-group">
+                        <label>צבע / טקסטורה זזה:</label>
+                        <select id="p2-skin" onchange="updatePlayerConfig(2)">
+                            <option value="orange">כתום קרב</option>
+                            <option value="leopard" id="opt-p2-leopard" disabled>מנומר זז - $220</option>
+                            <option value="stripes" id="opt-p2-stripes" disabled>פסים זזים - $180</option>
+                            <option value="rainbow" id="opt-p2-rainbow" disabled>צבע קשת מסתובב - $150</option>
+                            <option value="pulse" id="opt-p2-pulse" disabled>אור פועם ניאון - $200</option>
+                        </select>
+                        <button class="buy-item-btn" onclick="buyItem(2, 'leopard', 220, 'skin')">קנה סקין מנומר ($220)</button>
+                        <button class="buy-item-btn" onclick="buyItem(2, 'stripes', 180, 'skin')">קנה סקין פסים ($180)</button>
+                        <button class="buy-item-btn" onclick="buyItem(2, 'rainbow', 150, 'skin')">קנה צבע קשת ($150)</button>
+                        <button class="buy-item-btn" onclick="buyItem(2, 'pulse', 200, 'skin')">קנה ניאון פועם ($200)</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="closeShopAndPlay()">צא למשחק!</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- Canvas Procedural Texture Generator ---
+        function createPatternTexture(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            if (type === 'leopard') {
+                ctx.fillStyle = '#e3a857';
+                ctx.fillRect(0, 0, 256, 256);
+                ctx.fillStyle = '#3a220f';
+                for (let i = 0; i < 40; i++) {
+                    const x = Math.random() * 256;
+                    const y = Math.random() * 256;
+                    const r = 8 + Math.random() * 12;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#8b4513';
+                    ctx.beginPath();
+                    ctx.arc(x, y, r * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#3a220f';
+                }
+            } else if (type === 'stripes') {
+                ctx.fillStyle = '#111111';
+                ctx.fillRect(0, 0, 256, 256);
+                ctx.fillStyle = '#ffcc00';
+                for (let i = -256; i < 512; i += 32) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + 16, 0);
+                    ctx.lineTo(i + 16 - 256, 256);
+                    ctx.lineTo(i - 256, 256);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 2);
+            return texture;
+        }
+
+        const leopardTex = createPatternTexture('leopard');
+        const stripesTex = createPatternTexture('stripes');
+
+        // --- Sound Engine ---
+        let AudioCtx = null;
+
+        function initAudio() {
+            if (!AudioCtx) AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (AudioCtx.state === 'suspended') AudioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!AudioCtx) return;
+            const osc = AudioCtx.createOscillator();
+            const gain = AudioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(AudioCtx.destination);
+            const now = AudioCtx.currentTime;
+
+            if (type === 'shoot') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'laser') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'explosion') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(15, now + 0.5);
+                gain.gain.setValueAtTime(0.6, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            } else if (type === 'buy' || type === 'powerup') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            }
+        }
+
+        // --- Core Engine & Setup ---
+        let scene, renderer, clock;
+        let p1, p2;
+        let shells = [], particles = [], obstacles = [], barrels = [], powerups = [];
+        let keys = {};
+        const MAP_SIZE = 90;
+
+        const BODY_TYPES = {
+            balanced: { maxHp: 100, speed: 0.45, rotSpeed: 0.06, scale: 1.0 },
+            light: { maxHp: 70, speed: 0.65, rotSpeed: 0.08, scale: 0.85 },
+            heavy: { maxHp: 160, speed: 0.32, rotSpeed: 0.045, scale: 1.25 },
+            titan: { maxHp: 220, speed: 0.28, rotSpeed: 0.04, scale: 1.4 }
+        };
+
+        const WEAPON_TYPES = {
+            cannon: { damage: 35, reload: 0.5, bulletSpeed: 2.2 },
+            rapid: { damage: 15, reload: 0.18, bulletSpeed: 2.5 },
+            sniper: { damage: 70, reload: 1.0, bulletSpeed: 3.2 },
+            plasma: { damage: 95, reload: 0.8, bulletSpeed: 3.5 }
+        };
+
+        const POWERUP_TYPES = {
+            fly: { color: 0x00b0ff, label: 'FLYING' },
+            invisible: { color: 0x607d8b, label: 'LASER STEALTH' },
+            damage: { color: 0xff1744, label: 'DMG X2' },
+            shield: { color: 0xd500f9, label: 'SHIELD' }
+        };
+
+        let playerState = {
+            p1: { cash: 0, inventory: { titan: false, plasma: false, leopard: false, stripes: false, rainbow: false, pulse: false }, body: 'balanced', weapon: 'cannon', skin: 'green' },
+            p2: { cash: 0, inventory: { titan: false, plasma: false, leopard: false, stripes: false, rainbow: false, pulse: false }, body: 'balanced', weapon: 'cannon', skin: 'orange' }
+        };
+
+        function init() {
+            clock = new THREE.Clock();
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111115);
+            scene.fog = new THREE.FogExp2(0x111115, 0.015);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(40, 60, 30);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            buildMap();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', e => keys[e.code] = true);
+            window.addEventListener('keyup', e => keys[e.code] = false);
+
+            setInterval(spawnPowerup, 6000);
+            animate();
+        }
+
+        // --- Tank Creation with Material/Pattern Support ---
+        function createTank(defaultColor, bodyKey, weaponKey, skinKey) {
+            const bodyStats = BODY_TYPES[bodyKey];
+            const weaponStats = WEAPON_TYPES[weaponKey];
+
+            const group = new THREE.Group();
+            const scale = bodyStats.scale;
+
+            let tankMat = new THREE.MeshStandardMaterial({
+                color: skinKey === 'green' ? 0x4caf50 : (skinKey === 'orange' ? 0xff9800 : 0xffffff),
+                roughness: 0.3,
+                metalness: 0.4,
+                transparent: true,
+                opacity: 1.0
+            });
+
+            if (skinKey === 'leopard') {
+                tankMat.map = leopardTex.clone();
+                tankMat.map.needsUpdate = true;
+            } else if (skinKey === 'stripes') {
+                tankMat.map = stripesTex.clone();
+                tankMat.map.needsUpdate = true;
+            }
+
+            // Chassis
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2.8 * scale, 1.1 * scale, 4.2 * scale), tankMat);
+            body.position.y = (1.1 * scale) / 2;
+            body.castShadow = true;
+            group.add(body);
+
+            const frontPlate = new THREE.Mesh(new THREE.BoxGeometry(2.6 * scale, 0.3 * scale, 1.5 * scale), tankMat);
+            frontPlate.position.set(0, (1.1 * scale) * 0.8, 1.8 * scale);
+            frontPlate.rotation.x = -Math.PI / 6;
+            group.add(frontPlate);
+
+            // Tracks
+            const trackMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
+            const leftTrack = new THREE.Mesh(new THREE.BoxGeometry(0.6 * scale, 0.9 * scale, 4.4 * scale), trackMat);
+            leftTrack.position.set(-1.5 * scale, (0.9 * scale) / 2, 0);
+            group.add(leftTrack);
+
+            const rightTrack = leftTrack.clone();
+            rightTrack.position.x = 1.5 * scale;
+            group.add(rightTrack);
+
+            // Turret
+            const turret = new THREE.Group();
+            turret.position.set(0, 1.1 * scale, 0);
+
+            const turretMesh = new THREE.Mesh(new THREE.BoxGeometry(2.0 * scale, 0.8 * scale, 2.4 * scale), tankMat);
+            turretMesh.castShadow = true;
+            turret.add(turretMesh);
+
+            const barrel = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.16 * scale, 0.16 * scale, 3.2 * scale, 16),
+                new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 })
+            );
+            barrel.rotation.x = Math.PI / 2;
+            barrel.position.set(0, 0, 1.6 * scale);
+            barrel.castShadow = true;
+            turret.add(barrel);
+
+            const muzzle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.24 * scale, 0.24 * scale, 0.4 * scale, 16),
+                new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 })
+            );
+            muzzle.rotation.x = Math.PI / 2;
+            muzzle.position.set(0, 0, 3.2 * scale);
+            turret.add(muzzle);
+
+            const barrelTip = new THREE.Object3D();
+            barrelTip.position.set(0, 0, 3.5 * scale);
+            turret.add(barrelTip);
+
+            // Continuous Laser Visual Beam Mesh
+            const laserGeo = new THREE.CylinderGeometry(0.12, 0.12, 1, 8);
+            const laserMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
+            const laserMesh = new THREE.Mesh(laserGeo, laserMat);
+            laserMesh.rotation.x = Math.PI / 2;
+            laserMesh.visible = false;
+            scene.add(laserMesh);
+
+            group.add(turret);
+
+            // Shield Mesh
+            const shieldGeo = new THREE.SphereGeometry(3.5 * scale, 16, 16);
+            const shieldMat = new THREE.MeshBasicMaterial({ color: 0xd500f9, transparent: true, opacity: 0.35, wireframe: true });
+            const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+            shieldMesh.visible = false;
+            group.add(shieldMesh);
+
+            const camera = new THREE.PerspectiveCamera(60, (window.innerWidth / 2) / window.innerHeight, 0.1, 1000);
+
+            return {
+                mesh: group,
+                turret: turret,
+                barrelTip: barrelTip,
+                tankMat: tankMat,
+                shieldMesh: shieldMesh,
+                laserMesh: laserMesh,
+                camera: camera,
+                skinKey: skinKey,
+                bodyKey: bodyKey,
+                scale: scale,
+                speed: 0,
+                baseMaxSpeed: bodyStats.speed,
+                maxSpeed: bodyStats.speed,
+                rotSpeed: bodyStats.rotSpeed,
+                health: bodyStats.maxHp,
+                maxHealth: bodyStats.maxHp,
+                weapon: weaponStats,
+                score: 0,
+                lastShot: 0,
+                buffs: { damageUntil: 0, shieldUntil: 0, flyUntil: 0, invisibleUntil: 0 }
+            };
+        }
+
+        // --- Colorful Buildings with Faces ---
+        function createBuildingWithFace(w, h, d, colorHex) {
+            const group = new THREE.Group();
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.4 });
+            const buildingMesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            buildingMesh.castShadow = true;
+            buildingMesh.receiveShadow = true;
+            group.add(buildingMesh);
+
+            const eyeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1 });
+            const pupilMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const mouthMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+
+            const eyeL = new THREE.Mesh(new THREE.BoxGeometry(w * 0.2, h * 0.15, 0.2), eyeMat);
+            eyeL.position.set(-w * 0.22, h * 0.15, d / 2 + 0.1);
+            group.add(eyeL);
+
+            const pupilL = new THREE.Mesh(new THREE.BoxGeometry(w * 0.08, h * 0.08, 0.25), pupilMat);
+            pupilL.position.set(-w * 0.22, h * 0.15, d / 2 + 0.15);
+            group.add(pupilL);
+
+            const eyeR = new THREE.Mesh(new THREE.BoxGeometry(w * 0.2, h * 0.15, 0.2), eyeMat);
+            eyeR.position.set(w * 0.22, h * 0.15, d / 2 + 0.1);
+            group.add(eyeR);
+
+            const pupilR = new THREE.Mesh(new THREE.BoxGeometry(w * 0.08, h * 0.08, 0.25), pupilMat);
+            pupilR.position.set(w * 0.22, h * 0.15, d / 2 + 0.15);
+            group.add(pupilR);
+
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, h * 0.08, 0.2), mouthMat);
+            mouth.position.set(0, -h * 0.15, d / 2 + 0.1);
+            group.add(mouth);
+
+            return group;
+        }
+
+        function buildMap() {
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(MAP_SIZE * 2, MAP_SIZE * 2),
+                new THREE.MeshStandardMaterial({ color: 0x222225, roughness: 0.9 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const gridHelper = new THREE.GridHelper(MAP_SIZE * 2, 30, 0x555555, 0x222222);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+
+            const buildingColors = [0x2196f3, 0x9c27b0, 0xff9800, 0x00bcd4, 0x4caf50, 0xe91e63, 0xffeb3b];
+
+            const gridCols = 5;
+            const gridRows = 5;
+            const spacing = (MAP_SIZE * 1.6) / gridCols;
+            let colorIdx = 0;
+
+            for (let r = 0; r < gridRows; r++) {
+                for (let c = 0; c < gridCols; c++) {
+                    if ((r === 2 && c === 2) || (r === 0 && c === 0) || (r === 4 && c === 4)) continue;
+
+                    const w = 5 + Math.random() * 4;
+                    const h = 5 + Math.random() * 5;
+                    const d = 5 + Math.random() * 4;
+                    const color = buildingColors[colorIdx++ % buildingColors.length];
+
+                    const buildingGroup = createBuildingWithFace(w, h, d, color);
+
+                    const x = -MAP_SIZE * 0.75 + c * spacing + (Math.random() - 0.5) * 6;
+                    const z = -MAP_SIZE * 0.75 + r * spacing + (Math.random() - 0.5) * 6;
+                    buildingGroup.position.set(x, h / 2, z);
+
+                    scene.add(buildingGroup);
+
+                    obstacles.push({
+                        position: buildingGroup.position,
+                        w: w, d: d,
+                        halfW: w / 2,
+                        halfD: d / 2,
+                        height: h
+                    });
+                }
+            }
+
+            const barrelGeo = new THREE.CylinderGeometry(0.8, 0.8, 2, 12);
+            const barrelMat = new THREE.MeshStandardMaterial({ color: 0xd32f2f, roughness: 0.3 });
+            for (let i = 0; i < 12; i++) {
+                const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+                let x = (Math.random() - 0.5) * (MAP_SIZE - 20);
+                let z = (Math.random() - 0.5) * (MAP_SIZE - 20);
+                barrel.position.set(x, 1, z);
+                barrel.castShadow = true;
+                scene.add(barrel);
+                barrels.push({ mesh: barrel, position: barrel.position, radius: 0.9, height: 2.0 });
+            }
+        }
+
+        function spawnPowerup() {
+            if (powerups.length >= 6) return;
+            const keysList = Object.keys(POWERUP_TYPES);
+            const pTypeKey = keysList[Math.floor(Math.random() * keysList.length)];
+            const info = POWERUP_TYPES[pTypeKey];
+
+            const boxGeo = new THREE.BoxGeometry(1.6, 1.6, 1.6);
+            const boxMat = new THREE.MeshStandardMaterial({ color: info.color, roughness: 0.3, emissive: info.color, emissiveIntensity: 0.4 });
+            const mesh = new THREE.Mesh(boxGeo, boxMat);
+
+            let x = (Math.random() - 0.5) * (MAP_SIZE - 25);
+            let z = (Math.random() - 0.5) * (MAP_SIZE - 25);
+            mesh.position.set(x, 1, z);
+
+            scene.add(mesh);
+            powerups.push({ mesh: mesh, type: pTypeKey, position: mesh.position, radius: 1.0, height: 1.6, birth: clock.getElapsedTime() });
+        }
+
+        // --- Shop & Inventory ---
+        function updateShopUI() {
+            document.getElementById('cash-p1').innerText = playerState.p1.cash;
+            document.getElementById('cash-p2').innerText = playerState.p2.cash;
+            document.getElementById('shop-cash-p1').innerText = playerState.p1.cash;
+            document.getElementById('shop-cash-p2').innerText = playerState.p2.cash;
+
+            if (playerState.p1.inventory.titan) document.getElementById('opt-p1-titan').disabled = false;
+            if (playerState.p1.inventory.plasma) document.getElementById('opt-p1-plasma').disabled = false;
+            if (playerState.p1.inventory.leopard) document.getElementById('opt-p1-leopard').disabled = false;
+            if (playerState.p1.inventory.stripes) document.getElementById('opt-p1-stripes').disabled = false;
+            if (playerState.p1.inventory.rainbow) document.getElementById('opt-p1-rainbow').disabled = false;
+            if (playerState.p1.inventory.pulse) document.getElementById('opt-p1-pulse').disabled = false;
+
+            if (playerState.p2.inventory.titan) document.getElementById('opt-p2-titan').disabled = false;
+            if (playerState.p2.inventory.plasma) document.getElementById('opt-p2-plasma').disabled = false;
+            if (playerState.p2.inventory.leopard) document.getElementById('opt-p2-leopard').disabled = false;
+            if (playerState.p2.inventory.stripes) document.getElementById('opt-p2-stripes').disabled = false;
+            if (playerState.p2.inventory.rainbow) document.getElementById('opt-p2-rainbow').disabled = false;
+            if (playerState.p2.inventory.pulse) document.getElementById('opt-p2-pulse').disabled = false;
+        }
+
+        function buyItem(pNum, itemKey, cost, category) {
+            initAudio();
+            const pKey = 'p' + pNum;
+            const pData = playerState[pKey];
+
+            if (pData.inventory[itemKey]) {
+                alert('כבר קנית פריט זה!');
+                return;
+            }
+
+            if (pData.cash >= cost) {
+                pData.cash -= cost;
+                pData.inventory[itemKey] = true;
+                playSound('buy');
+                
+                if (category === 'body') document.getElementById(`${pKey}-body`).value = itemKey;
+                if (category === 'weapon') document.getElementById(`${pKey}-weapon`).value = itemKey;
+                if (category === 'skin') document.getElementById(`${pKey}-skin`).value = itemKey;
+                
+                updatePlayerConfig(pNum);
+                updateShopUI();
+            } else {
+                alert('אין לך מספיק כסף!');
+            }
+        }
+
+        function updatePlayerConfig(pNum) {
+            const pKey = 'p' + pNum;
+            playerState[pKey].body = document.getElementById(`${pKey}-body`).value;
+            playerState[pKey].weapon = document.getElementById(`${pKey}-weapon`).value;
+            playerState[pKey].skin = document.getElementById(`${pKey}-skin`).value;
+        }
+
+        function openShop() {
+            updateShopUI();
+            document.getElementById('lobby-screen').classList.remove('hidden');
+        }
+
+        function closeShopAndPlay() {
+            document.getElementById('lobby-screen').classList.add('hidden');
+            startGame();
+        }
+
+        function startGame() {
+            initAudio();
+            updateShopUI();
+
+            if (p1) { scene.remove(p1.mesh); scene.remove(p1.laserMesh); }
+            if (p2) { scene.remove(p2.mesh); scene.remove(p2.laserMesh); }
+
+            p1 = createTank(0x4caf50, playerState.p1.body, playerState.p1.weapon, playerState.p1.skin);
+            p2 = createTank(0xff9800, playerState.p2.body, playerState.p2.weapon, playerState.p2.skin);
+
+            scene.add(p1.mesh);
+            scene.add(p2.mesh);
+
+            respawnPlayer(p1, -35, -35);
+            respawnPlayer(p2, 35, 35);
+        }
+
+        function respawnPlayer(player, prefX, prefZ) {
+            player.health = player.maxHealth;
+            player.buffs = { damageUntil: 0, shieldUntil: 0, flyUntil: 0, invisibleUntil: 0 };
+            player.shieldMesh.visible = false;
+            player.laserMesh.visible = false;
+            let x = prefX !== undefined ? prefX : (Math.random() - 0.5) * (MAP_SIZE - 20);
+            let z = prefZ !== undefined ? prefZ : (Math.random() - 0.5) * (MAP_SIZE - 20);
+            player.mesh.position.set(x, 0, z);
+            player.mesh.rotation.y = Math.random() * Math.PI * 2;
+        }
+
+        // --- Solid Physics Engine ---
+        function resolveSolidCollisions(player) {
+            const now = clock.getElapsedTime();
+            const isFlying = now < player.buffs.flyUntil;
+            const tankRadius = 1.8 * player.scale;
+
+            for (let obs of obstacles) {
+                if (isFlying && player.mesh.position.y >= obs.height) continue;
+
+                const closestX = Math.max(obs.position.x - obs.halfW, Math.min(player.mesh.position.x, obs.position.x + obs.halfW));
+                const closestZ = Math.max(obs.position.z - obs.halfD, Math.min(player.mesh.position.z, obs.position.z + obs.halfD));
+
+                const distX = player.mesh.position.x - closestX;
+                const distZ = player.mesh.position.z - closestZ;
+                const distanceSq = (distX * distX) + (distZ * distZ);
+
+                if (distanceSq < tankRadius * tankRadius) {
+                    const distance = Math.sqrt(distanceSq);
+                    if (distance > 0) {
+                        const overlap = tankRadius - distance;
+                        player.mesh.position.x += (distX / distance) * overlap;
+                        player.mesh.position.z += (distZ / distance) * overlap;
+                    } else {
+                        player.mesh.position.x += tankRadius;
+                    }
+                }
+            }
+
+            for (let b of barrels) {
+                const dist = Math.hypot(player.mesh.position.x - b.position.x, player.mesh.position.z - b.position.z);
+                const minDist = tankRadius + b.radius;
+                if (dist < minDist && dist > 0) {
+                    const overlap = minDist - dist;
+                    const dirX = (player.mesh.position.x - b.position.x) / dist;
+                    const dirZ = (player.mesh.position.z - b.position.z) / dist;
+                    player.mesh.position.x += dirX * overlap;
+                    player.mesh.position.z += dirZ * overlap;
+                }
+            }
+
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                let pu = powerups[i];
+                const dist = Math.hypot(player.mesh.position.x - pu.position.x, player.mesh.position.z - pu.position.z);
+                
+                if (dist < tankRadius + pu.radius) {
+                    playSound('powerup');
+                    if (pu.type === 'fly') player.buffs.flyUntil = now + 6;
+                    else if (pu.type === 'invisible') player.buffs.invisibleUntil = now + 6;
+                    else if (pu.type === 'damage') player.buffs.damageUntil = now + 6;
+                    else if (pu.type === 'shield') player.buffs.shieldUntil = now + 6;
+
+                    scene.remove(pu.mesh);
+                    powerups.splice(i, 1);
+                } else if (dist < tankRadius + pu.radius + 0.2) {
+                    const overlap = (tankRadius + pu.radius) - dist;
+                    const dirX = (player.mesh.position.x - pu.position.x) / dist;
+                    const dirZ = (player.mesh.position.z - pu.position.z) / dist;
+                    player.mesh.position.x += dirX * overlap;
+                    player.mesh.position.z += dirZ * overlap;
+                }
+            }
+
+            const otherPlayer = (player === p1) ? p2 : p1;
+            if (otherPlayer && otherPlayer.mesh) {
+                const otherRadius = 1.8 * otherPlayer.scale;
+                const dist = Math.hypot(player.mesh.position.x - otherPlayer.mesh.position.x, player.mesh.position.z - otherPlayer.mesh.position.z);
+                const minDist = tankRadius + otherRadius;
+
+                if (dist < minDist && dist > 0) {
+                    const overlap = (minDist - dist) * 0.5;
+                    const dirX = (player.mesh.position.x - otherPlayer.mesh.position.x) / dist;
+                    const dirZ = (player.mesh.position.z - otherPlayer.mesh.position.z) / dist;
+                    player.mesh.position.x += dirX * overlap;
+                    player.mesh.position.z += dirZ * overlap;
+                    otherPlayer.mesh.position.x -= dirX * overlap;
+                    otherPlayer.mesh.position.z -= dirZ * overlap;
+                }
+            }
+        }
+
+        // --- Firing Cannon Shells OR Continuous Laser ---
+        function fireShell(player) {
+            const now = clock.getElapsedTime();
+            const isLaserMode = now < player.buffs.invisibleUntil;
+
+            if (isLaserMode) {
+                // Continuous Instant Laser Beam Execution
+                const worldTip = new THREE.Vector3();
+                player.barrelTip.getWorldPosition(worldTip);
+
+                const dir = new THREE.Vector3(0, 0, 1).applyQuaternion(player.mesh.quaternion);
+                const beamLength = 60;
+                const targetPos = worldTip.clone().addScaledVector(dir, beamLength);
+
+                // Laser Mesh Display
+                player.laserMesh.position.copy(worldTip.clone().addScaledVector(dir, beamLength / 2));
+                player.laserMesh.scale.set(1, beamLength, 1);
+                player.laserMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+                player.laserMesh.visible = true;
+
+                playSound('laser');
+
+                // Instant Damage Collision Check
+                const targetPlayer = player === p1 ? p2 : p1;
+                if (targetPlayer && targetPlayer.mesh) {
+                    const toTarget = targetPlayer.mesh.position.clone().add(new THREE.Vector3(0, 1, 0)).sub(worldTip);
+                    const projLength = toTarget.dot(dir);
+
+                    if (projLength > 0 && projLength < beamLength) {
+                        const closestPoint = worldTip.clone().addScaledVector(dir, projLength);
+                        const distToBeam = closestPoint.distanceTo(targetPlayer.mesh.position.clone().add(new THREE.Vector3(0, 1, 0)));
+
+                        if (distToBeam < 2.5 * targetPlayer.scale) {
+                            if (now >= targetPlayer.buffs.shieldUntil) {
+                                targetPlayer.health -= 1.8; // High continuous tick damage
+                                createExplosion(closestPoint);
+
+                                if (targetPlayer.health <= 0) {
+                                    createExplosion(targetPlayer.mesh.position);
+                                    player.score++;
+                                    const killerKey = player === p1 ? 'p1' : 'p2';
+                                    playerState[killerKey].cash += 100;
+                                    updateShopUI();
+                                    respawnPlayer(targetPlayer);
+                                }
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Standard Bullet Firing
+            if (now - player.lastShot < player.weapon.reload) return;
+            player.lastShot = now;
+
+            const worldTip = new THREE.Vector3();
+            player.barrelTip.getWorldPosition(worldTip);
+
+            let dmg = player.weapon.damage;
+            if (now < player.buffs.damageUntil) dmg *= 2;
+
+            const shell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 8, 8),
+                new THREE.MeshBasicMaterial({ color: now < player.buffs.damageUntil ? 0xff1744 : 0xffcc00 })
+            );
+            shell.position.copy(worldTip);
+
+            const dir = new THREE.Vector3(0, 0, 1);
+            dir.applyQuaternion(player.mesh.quaternion);
+
+            scene.add(shell);
+            shells.push({
+                mesh: shell,
+                direction: dir,
+                speed: player.weapon.bulletSpeed,
+                damage: dmg,
+                owner: player,
+                birth: now
+            });
+
+            playSound('shoot');
+        }
+
+        function createExplosion(pos) {
+            playSound('explosion');
+            for (let i = 0; i < 20; i++) {
+                const p = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.1 + Math.random() * 0.3, 4, 4),
+                    new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? 0xff4400 : 0xffbb00 })
+                );
+                p.position.copy(pos);
+                scene.add(p);
+                particles.push({
+                    mesh: p,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 0.5, Math.random() * 0.5, (Math.random() - 0.5) * 0.5),
+                    life: 1.0
+                });
+            }
+        }
+
+        // --- Skin Animation Updates ---
+        function updateAnimatedSkins() {
+            const time = clock.getElapsedTime();
+
+            [p1, p2].forEach(p => {
+                if (!p || !p.tankMat) return;
+
+                if (p.skinKey === 'rainbow') {
+                    p.tankMat.color.setHSL((time * 0.4) % 1.0, 0.9, 0.5);
+                } else if (p.skinKey === 'pulse') {
+                    const pulse = (Math.sin(time * 6) + 1) / 2;
+                    p.tankMat.color.setRGB(0, pulse * 0.9 + 0.1, pulse * 0.9 + 0.1);
+                    p.tankMat.emissive.setRGB(0, pulse * 0.4, pulse * 0.4);
+                } else if (p.skinKey === 'leopard' && p.tankMat.map) {
+                    p.tankMat.map.offset.x = (time * 0.05) % 1.0;
+                    p.tankMat.map.offset.y = (time * 0.05) % 1.0;
+                } else if (p.skinKey === 'stripes' && p.tankMat.map) {
+                    p.tankMat.map.offset.x = (time * 0.15) % 1.0;
+                }
+            });
+        }
+
+        function updatePlayers() {
+            if (!p1 || !p2) return;
+            const now = clock.getElapsedTime();
+
+            [p1, p2].forEach(p => {
+                const isFlying = now < p.buffs.flyUntil;
+                const isLaserStealth = now < p.buffs.invisibleUntil;
+
+                // Flying Height Animation
+                const targetY = isFlying ? 4.5 : 0;
+                p.mesh.position.y = THREE.MathUtils.lerp(p.mesh.position.y, targetY, 0.1);
+
+                // Invisible Stealth Transparency
+                p.tankMat.opacity = isLaserStealth ? 0.35 : 1.0;
+
+                // Reset Laser beam when not active/firing
+                if (!isLaserStealth) p.laserMesh.visible = false;
+
+                p.maxSpeed = p.baseMaxSpeed;
+                p.shieldMesh.visible = now < p.buffs.shieldUntil;
+            });
+
+            // Player 1 Controls (WASD + Space)
+            if (keys['KeyW']) p1.speed = Math.min(p1.speed + 0.03, p1.maxSpeed);
+            else if (keys['KeyS']) p1.speed = Math.max(p1.speed - 0.03, -p1.maxSpeed * 0.5);
+            else p1.speed *= 0.85;
+
+            if (keys['KeyA']) p1.mesh.rotation.y += p1.rotSpeed;
+            if (keys['KeyD']) p1.mesh.rotation.y -= p1.rotSpeed;
+            
+            if (keys['Space']) fireShell(p1);
+            else if (now < p1.buffs.invisibleUntil) p1.laserMesh.visible = false;
