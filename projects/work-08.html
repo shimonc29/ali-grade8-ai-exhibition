@@ -998,3 +998,156 @@
             
             if (keys['Space']) fireShell(p1);
             else if (now < p1.buffs.invisibleUntil) p1.laserMesh.visible = false;
+
+            // Player 2 Controls (Arrows + Enter)
+            if (keys['ArrowUp']) p2.speed = Math.min(p2.speed + 0.03, p2.maxSpeed);
+            else if (keys['ArrowDown']) p2.speed = Math.max(p2.speed - 0.03, -p2.maxSpeed * 0.5);
+            else p2.speed *= 0.85;
+
+            if (keys['ArrowLeft']) p2.mesh.rotation.y += p2.rotSpeed;
+            if (keys['ArrowRight']) p2.mesh.rotation.y -= p2.rotSpeed;
+
+            if (keys['Enter']) fireShell(p2);
+            else if (now < p2.buffs.invisibleUntil) p2.laserMesh.visible = false;
+
+            [p1, p2].forEach(p => {
+                p.mesh.translateZ(p.speed);
+                resolveSolidCollisions(p);
+
+                p.mesh.position.x = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, p.mesh.position.x));
+                p.mesh.position.z = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, p.mesh.position.z));
+
+                const camOffset = new THREE.Vector3(0, 12, -16).applyAxisAngle(new THREE.Vector3(0, 1, 0), p.mesh.rotation.y);
+                p.camera.position.lerp(p.mesh.position.clone().add(camOffset), 0.12);
+                p.camera.lookAt(p.mesh.position.clone().add(new THREE.Vector3(0, 2, 0)));
+            });
+        }
+
+        function updateShells() {
+            const now = clock.getElapsedTime();
+            for (let i = shells.length - 1; i >= 0; i--) {
+                const s = shells[i];
+                s.mesh.position.addScaledVector(s.direction, s.speed);
+                let hit = false;
+
+                for (let obs of obstacles) {
+                    if (Math.abs(s.mesh.position.x - obs.position.x) < obs.halfW &&
+                        Math.abs(s.mesh.position.z - obs.position.z) < obs.halfD &&
+                        s.mesh.position.y < obs.height) {
+                        hit = true; break;
+                    }
+                }
+
+                [p1, p2].forEach((target) => {
+                    if (!hit && s.owner !== target) {
+                        const dist3D = s.mesh.position.distanceTo(target.mesh.position.clone().add(new THREE.Vector3(0, 1, 0)));
+                        const hitBoxRadius = 2.4 * target.scale;
+
+                        if (dist3D < hitBoxRadius) {
+                            hit = true;
+                            if (now >= target.buffs.shieldUntil) {
+                                target.health -= s.damage;
+                                createExplosion(s.mesh.position);
+
+                                if (target.health <= 0) {
+                                    createExplosion(target.mesh.position);
+                                    s.owner.score++;
+
+                                    const killerKey = s.owner === p1 ? 'p1' : 'p2';
+                                    playerState[killerKey].cash += 100;
+                                    updateShopUI();
+
+                                    respawnPlayer(target);
+                                }
+                            } else {
+                                createExplosion(s.mesh.position);
+                            }
+                        }
+                    }
+                });
+
+                if (hit || now - s.birth > 3.0) {
+                    scene.remove(s.mesh);
+                    shells.splice(i, 1);
+                }
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.mesh.position.add(p.vel);
+                p.life -= 0.03;
+                p.mesh.scale.multiplyScalar(0.94);
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function updateUI() {
+            if (!p1 || !p2) return;
+            const now = clock.getElapsedTime();
+
+            const updateHud = (p, hpId, reloadId, scoreId, effectsId) => {
+                document.getElementById(hpId).style.width = Math.max(0, (p.health / p.maxHealth) * 100) + '%';
+                document.getElementById(reloadId).style.width = Math.min(1, (now - p.lastShot) / p.weapon.reload) * 100 + '%';
+                document.getElementById(scoreId).innerText = p.score;
+
+                let html = '';
+                if (now < p.buffs.flyUntil) html += '<span class="effect-badge" style="background:#00b0ff; color:#000;">FLY</span>';
+                if (now < p.buffs.invisibleUntil) html += '<span class="effect-badge" style="background:#607d8b;">LASER STEALTH</span>';
+                if (now < p.buffs.damageUntil) html += '<span class="effect-badge" style="background:#ff1744;">DMG X2</span>';
+                if (now < p.buffs.shieldUntil) html += '<span class="effect-badge" style="background:#d500f9;">SHIELD</span>';
+                document.getElementById(effectsId).innerHTML = html;
+            };
+
+            updateHud(p1, 'hp-p1', 'reload-p1', 'score-p1', 'effects-p1');
+            updateHud(p2, 'hp-p2', 'reload-p2', 'score-p2', 'effects-p2');
+        }
+
+        function onWindowResize() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (p1 && p2) {
+                p1.camera.aspect = (window.innerWidth / 2) / window.innerHeight;
+                p1.camera.updateProjectionMatrix();
+                p2.camera.aspect = (window.innerWidth / 2) / window.innerHeight;
+                p2.camera.updateProjectionMatrix();
+            }
+        }
+
+        function renderSplitScreen() {
+            if (!p1 || !p2) return;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            renderer.setScissorTest(true);
+
+            // Left Screen - Player 1
+            renderer.setViewport(0, 0, w / 2, h);
+            renderer.setScissor(0, 0, w / 2, h);
+            renderer.render(scene, p1.camera);
+
+            // Right Screen - Player 2
+            renderer.setViewport(w / 2, 0, w / 2, h);
+            renderer.setScissor(w / 2, 0, w / 2, h);
+            renderer.render(scene, p2.camera);
+
+            renderer.setScissorTest(false);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePlayers();
+            updateAnimatedSkins();
+            updateShells();
+            updateParticles();
+            updateUI();
+            renderSplitScreen();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
