@@ -998,3 +998,180 @@ function goGarage(){
 }
 function startMatch(){
   Sound.init();
+  disposePlayer(p1); disposePlayer(p2);
+  shells.forEach(s => arena.remove(s.mesh)); shells.length = 0;
+  powerups.forEach(u => arena.remove(u.group)); powerups.length = 0;
+  barrels.forEach(b => { b.alive = true; b.mesh.visible = true; });
+  p1 = makePlayer('p1'); p2 = makePlayer('p2');
+  respawn(p1, true); respawn(p2, true); p1.invulnUntil = p2.invulnUntil = 0;
+  $('k-p1').textContent = '0'; $('k-p2').textContent = '0'; $('target-label').textContent = SAVE.target; $('killfeed').innerHTML = '';
+  timeScale = 1; winner = null; puTimer = 3;
+  p1.engine = Sound.engine(); p2.engine = Sound.engine();
+  show(null); setHUD(true); onResize();
+  state = 'countdown'; countEnd = realTime + 3.2; lastCount = -1;
+  spawnPowerup(); spawnPowerup();
+}
+function stopEngines(){ [p1, p2].forEach(p => { if (p && p.engine) { p.engine.stop(); p.engine = null; } }); }
+function endMatch(w){
+  winner = w; timeScale = .25; SAVE[w.pk].cash += 150; w.stats.earned += 150; persist();
+  setTimeout(() => {
+    state = 'victory'; timeScale = 1; stopEngines(); Sound.play('win'); setHUD(false);
+    const t = $('v-title'); t.textContent = TEAM[w.pk].name + ' ניצח'; t.style.color = TEAM[w.pk].css;
+    $('v-stats').innerHTML = [p1, p2].map(p => `<div class="vcard plate" style="--pc:${TEAM[p.pk].css}"><h3>${TEAM[p.pk].name}${p === w ? ' 🏆' : ''}</h3><dl>
+      <dt>השמדות</dt><dd>${p.kills}</dd><dt>נזק שגרם</dt><dd>${Math.round(p.stats.damage)}</dd>
+      <dt>דיוק</dt><dd>${p.stats.shots ? Math.round(p.stats.hits / p.stats.shots * 100) : 0}%</dd>
+      <dt>כסף שהרוויח</dt><dd style="color:var(--gold)">$${p.stats.earned}</dd></dl></div>`).join('');
+    show('screen-victory');
+  }, 1300);
+}
+function pause(on){
+  if (on && state === 'playing') { state = 'paused'; show('screen-pause'); stopEngines(); }
+  else if (!on && state === 'paused') { state = 'playing'; show(null); p1.engine = Sound.engine(); p2.engine = Sound.engine(); }
+}
+
+$('btn-to-garage').onclick = () => { Sound.init(); Sound.play('click'); goGarage(); };
+$('btn-fight').onclick = () => { Sound.play('click'); startMatch(); };
+$('btn-resume').onclick = () => pause(false);
+$('btn-pause-garage').onclick = () => goGarage();
+$('btn-rematch').onclick = () => startMatch();
+$('btn-v-garage').onclick = () => goGarage();
+$('mute').onclick = () => { Sound.init(); Sound.setMuted(!Sound.muted); };
+Sound.setMuted(Sound.muted);
+if (matchMedia('(pointer:coarse)').matches) $('touch-note').classList.remove('hidden');
+
+const GAME_KEYS = ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'];
+addEventListener('keydown', e => {
+  if (['countdown', 'playing', 'paused'].includes(state) && GAME_KEYS.includes(e.code)) e.preventDefault();
+  if (e.repeat && e.code !== 'Space' && e.code !== 'Enter') { keys[e.code] = true; return; }
+  keys[e.code] = true;
+  if (state === 'title' && (e.code === 'Enter' || e.code === 'NumpadEnter')) { Sound.init(); goGarage(); }
+  if (e.code === 'Escape' || e.code === 'KeyP') { if (state === 'playing') pause(true); else if (state === 'paused') pause(false); }
+  if (e.code === 'KeyM') { Sound.init(); Sound.setMuted(!Sound.muted); }
+});
+addEventListener('keyup', e => keys[e.code] = false);
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (state === 'playing') pause(true); });
+
+/* ================= UPDATE ================= */
+const CTRL = { p1:{ f:'KeyW', b:'KeyS', l:'KeyA', r:'KeyD', fire:'Space' }, p2:{ f:'ArrowUp', b:'ArrowDown', l:'ArrowLeft', r:'ArrowRight', fire:'Enter' } };
+function updatePlayer(p, dt){
+  const k = dt * 60, c = CTRL[p.pk], live = state === 'playing' && !winner;
+  if (!p.alive) { if (gameTime >= p.respawnAt && live) respawn(p); if (p.engine) p.engine.g.gain.setTargetAtTime(0, Sound.ctx.currentTime, .1); updateCam(p, dt); return; }
+  const flying = gameTime < p.buffs.fly, stealth = gameTime < p.buffs.stealth;
+  if (live) {
+    if (keys[c.f]) p.speed = Math.min(p.speed + .03 * k, p.B.speed);
+    else if (keys[c.b]) p.speed = Math.max(p.speed - .03 * k, -p.B.speed * .5);
+    else p.speed *= Math.pow(.85, k);
+    const turn = (keys[c.l] ? 1 : 0) - (keys[c.r] ? 1 : 0);
+    p.root.rotation.y += turn * p.B.rot * k;
+    if (keys[c.fire] || (c.fire === 'Enter' && keys['NumpadEnter'])) fire(p); else p.laser.visible = false;
+    p.tread.map.offset.y -= (p.speed + turn * .1) * k * .25;
+  } else { p.speed *= Math.pow(.85, k); p.laser.visible = false; }
+  if (!stealth) p.laser.visible = false;
+  p.root.translateZ(p.speed * k);
+  resolveCollisions(p);
+  p.root.position.y += ((flying ? 4.5 : 0) - p.root.position.y) * (1 - Math.pow(.9, k));
+  const acc = (p.speed - p.prevSpeed) / Math.max(k, .001); p.prevSpeed = p.speed;
+  p.model.rotation.x += ((-acc * 5) - p.model.rotation.x) * .15;
+  p.model.rotation.z = flying ? Math.sin(gameTime * 3) * .05 : 0;
+  p.barrel.position.z += (1.4 * p.scale - p.barrel.position.z) * (1 - Math.pow(.82, k));
+  if (!flying && Math.abs(p.speed) > .2 && Math.random() < .35 * k) { const back = new THREE.Vector3(rnd(-1.4, 1.4) * p.scale, .3, -2.4 * p.scale).applyQuaternion(p.root.quaternion).add(p.root.position); fx({ pos:back, tex:smokeTex, normal:true, color:0x9a8a7a, opacity:.35, vel:rv(.02, .02), size:.8, end:2.6, life:.9 }); }
+  if (p.health / p.maxHealth < .35 && Math.random() < .3 * k) fx({ pos:p.root.position.clone().add(new THREE.Vector3(0, 2 * p.scale, 0)), tex:smokeTex, normal:true, color:0x1a1a1e, opacity:.65, vel:new THREE.Vector3(rnd(-.02, .02), .06, rnd(-.02, .02)), size:1, end:4, life:1.6 });
+  const blink = gameTime < p.invulnUntil && Math.floor(gameTime * 12) % 2 === 0;
+  const op = stealth ? .22 : blink ? .35 : 1;
+  for (const m of p.mats) m.opacity = op;
+  p.ring.material.opacity = stealth ? .15 : .5;
+  p.shield.visible = gameTime < p.buffs.shield; if (p.shield.visible) { p.sh1.rotation.y += .02 * k; p.sh1.rotation.x += .01 * k; p.sh1.material.opacity = .4 + Math.sin(gameTime * 8) * .15; }
+  p.jets.visible = flying; if (flying) p.jets.children.forEach(j => { const s = (1.4 + Math.random() * .8) * p.scale; j.scale.set(s, s, 1); });
+  p.antTip.material.opacity = .5 + Math.sin(gameTime * 5) * .5;
+  if (p.engine) { const r = Math.abs(p.speed) / p.B.speed; p.engine.o.frequency.setTargetAtTime(38 + r * 55 + (flying ? 30 : 0), Sound.ctx.currentTime, .1); p.engine.g.gain.setTargetAtTime(.035 + r * .05, Sound.ctx.currentTime, .1); }
+  updateCam(p, dt);
+}
+function updateCam(p, dt){
+  const k = dt * 60 || 1;
+  const yaw = p.root.rotation.y;
+  const off = new THREE.Vector3(0, 11, -15).applyAxisAngle(UP, yaw);
+  const target = p.root.position.clone().add(off); target.y = Math.max(target.y, p.root.position.y + 6);
+  p.cam.position.lerp(target, 1 - Math.pow(.88, k));
+  const look = p.root.position.clone().add(new THREE.Vector3(0, 2, 0)).add(new THREE.Vector3(0, 0, 5).applyAxisAngle(UP, yaw));
+  p.cam.lookAt(look);
+  if (p.shake > .001) { p.cam.position.add(rv(p.shake * .6).sub(new THREE.Vector3(0, p.shake * .3, 0))); p.shake *= Math.pow(.86, k); }
+}
+function updateWorld(dt){
+  const lives = [p1, p2].filter(p => p && p.alive);
+  for (const b of buildings) {
+    let near = null, nd = 1e9;
+    for (const p of lives) { const d = p.root.position.distanceTo(b.group.position); if (d < nd) { nd = d; near = p; } }
+    const t = realTime + b.phase;
+    b.blink.material.opacity = Math.sin(t * 3) > .6 ? 1 : .08;
+    let lx = Math.sin(t * .5) * .4, ly = 0;
+    if (near && nd < 60) { const l = b.group.worldToLocal(near.root.position.clone()); lx = Math.max(-1, Math.min(1, l.x / 14)); ly = Math.max(-1, Math.min(.2, (l.y - 4) / 10)); if (l.z < 0) lx *= .3; }
+    b.pupils.forEach(pp => { const tx = pp.userData.base.x + lx * b.ew * .28, ty = pp.userData.base.y + ly * b.eh * .25; pp.position.x += (tx - pp.position.x) * .15; pp.position.y += (ty - pp.position.y) * .15; });
+    b.nextBlink -= dt || .016; const bl = b.nextBlink < 0 ? .1 : 1; if (b.nextBlink < -.12) b.nextBlink = 2 + Math.random() * 5;
+    b.eyes.forEach((e, i) => { e.scale.y = bl; b.pupils[i].scale.y = bl; });
+    const open = near && nd < 16 ? 2.6 : 1; b.mouth.scale.y += (open - b.mouth.scale.y) * .15;
+  }
+  for (const b of barrels) if (!b.alive && gameTime > b.respawnAt && ![p1, p2].some(p => p && Math.hypot(p.root.position.x - b.x, p.root.position.z - b.z) < 4)) { b.alive = true; b.mesh.visible = true; b.mesh.scale.setScalar(.01); }
+  for (const b of barrels) if (b.alive && b.mesh.scale.x < 1) b.mesh.scale.setScalar(Math.min(1, b.mesh.scale.x + .05));
+  for (const L of LIGHTS) { const left = L.until - gameTime; L.l.intensity = left > 0 ? L.max * (left / L.dur) : 0; }
+}
+
+/* ================= RENDER LOOP ================= */
+const clock = new THREE.Clock();
+function frame(){
+  requestAnimationFrame(frame);
+  const rdt = Math.min(clock.getDelta(), .05); realTime += rdt;
+  const running = ['countdown', 'playing'].includes(state) || (state === 'victory');
+  const dt = (state === 'playing' ? rdt * timeScale : state === 'countdown' || state === 'victory' ? rdt : 0);
+  frameDt = dt; gameTime += dt;
+  const W = innerWidth, H = innerHeight;
+
+  if (state === 'countdown') {
+    const left = countEnd - realTime, n = Math.ceil(left - .2);
+    if (n !== lastCount) {
+      lastCount = n; const txt = n > 0 ? String(n) : 'קדימה!';
+      if (n > 0) Sound.play('beep'); else Sound.play('go');
+      [p1, p2].forEach(p => { const c = half(p).querySelector('.count'); c.textContent = txt; c.style.color = n > 0 ? 'var(--ink)' : 'var(--gold)'; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); });
+    }
+    if (left <= 0) state = 'playing';
+  }
+  if (state === 'playing' || state === 'countdown') {
+    puTimer -= dt; if (puTimer <= 0 && state === 'playing') { spawnPowerup(); puTimer = 6; }
+    updatePlayer(p1, dt); updatePlayer(p2, dt); updateShells(dt);
+  }
+  if (state === 'paused') { updateCam(p1, 0); updateCam(p2, 0); }
+  updateFX(state === 'paused' ? 0 : (dt || rdt * .3));
+  updatePowerups(); updateWorld(dt);
+  const at = realTime;
+  if (p1) { animateSkin(p1, at); animateSkin(p2, at); }
+
+  if (state === 'title') {
+    const a = realTime * .07;
+    titleCam.position.set(Math.cos(a) * 105, 42 + Math.sin(realTime * .2) * 4, Math.sin(a) * 105); titleCam.lookAt(0, 4, 0);
+    renderer.setViewport(0, 0, W, H); renderer.setScissorTest(false); renderer.render(arena, titleCam);
+  } else if (state === 'garage') {
+    ['p1', 'p2'].forEach((pk, i) => { if (turntables[pk]) turntables[pk].rotation.y = realTime * .45 + i * Math.PI; if (showTanks[pk]) animateSkin(showTanks[pk], at); });
+    renderer.setViewport(0, 0, W, H); renderer.setScissorTest(false); renderer.render(showroom, showCam);
+  } else if (state === 'victory' && winner) {
+    const a = realTime * .3, wp = winner.root.position;
+    titleCam.position.set(wp.x + Math.cos(a) * 15, wp.y + 7, wp.z + Math.sin(a) * 15); titleCam.lookAt(wp.x, wp.y + 1.5, wp.z);
+    winner.root.visible = true;
+    renderer.setViewport(0, 0, W, H); renderer.setScissorTest(false); renderer.render(arena, titleCam);
+  } else if (p1) {
+    renderer.setScissorTest(true);
+    renderer.setViewport(0, 0, W / 2, H); renderer.setScissor(0, 0, W / 2, H); renderer.render(arena, p1.cam);
+    renderer.setViewport(W / 2, 0, W / 2, H); renderer.setScissor(W / 2, 0, W / 2, H); renderer.render(arena, p2.cam);
+    renderer.setScissorTest(false);
+    updateHUD(); drawMinimap();
+  }
+}
+function onResize(){
+  renderer.setSize(innerWidth, innerHeight);
+  titleCam.aspect = showCam.aspect = innerWidth / innerHeight; titleCam.updateProjectionMatrix(); showCam.updateProjectionMatrix();
+  showCam.position.z = innerWidth / innerHeight < 1.4 ? 30 : 22;
+  [p1, p2].forEach(p => { if (p) { p.cam.aspect = (innerWidth / 2) / innerHeight; p.cam.updateProjectionMatrix(); } });
+}
+addEventListener('resize', onResize);
+onResize(); frame();
+</script>
+</body>
+</html>
