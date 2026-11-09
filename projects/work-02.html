@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פסנתר וירטואלי ומאמן למידה</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* עיצוב מותאם אישית למקשי הפסנתר */
+        .white-key {
+            background: linear-gradient(to bottom, #ffffff 0%, #eeeeee 100%);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 -5px 10px rgba(0, 0, 0, 0.1);
+            transition: background 0.05s ease, transform 0.05s ease;
+        }
+
+        .white-key.active, .white-key:active {
+            background: linear-gradient(to bottom, #eeeeee 0%, #cccccc 100%);
+            transform: translateY(2px);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .black-key {
+            background: linear-gradient(to bottom, #333333 0%, #000000 100%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.3);
+            transition: background 0.05s ease, transform 0.05s ease;
+        }
+
+        .black-key.active, .black-key:active {
+            background: linear-gradient(to bottom, #000000 0%, #222222 100%);
+            transform: translateY(2px);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* הדגשה של קליד מיועד לנגינה במצב למידה */
+        .white-key.target, .black-key.target {
+            background: #f59e0b !important; /* Amber highlight */
+            box-shadow: 0 0 15px #f59e0b;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(0.97); }
+        }
+
+        /* מניעת בחירת טקסט בזמן נגינה */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col justify-between font-sans no-select">
+
+    <!-- סרגל עליון / כותרת -->
+    <header class="p-6 text-center border-b border-slate-800 bg-slate-950/50 backdrop-blur">
+        <h1 class="text-4xl font-extrabold tracking-wide text-amber-400 mb-2">פסנתר וירטואלי ומאמן למידה</h1>
+        <p class="text-slate-400 text-sm">נגן באופן חופשי או בחר שיר במצב למידה כדי להתאמן!</p>
+    </header>
+
+    <!-- אזור הפסנתר המרכזי -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        
+        <!-- בקרות והגדרות -->
+        <div class="mb-6 flex flex-wrap gap-4 items-center justify-center bg-slate-800/80 p-4 rounded-xl border border-slate-700 shadow-xl">
+            <!-- עוצמת שמע -->
+            <div class="flex items-center gap-3">
+                <label for="volume" class="text-sm font-medium text-slate-300">ווליום:</label>
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5" class="accent-amber-400 cursor-pointer">
+            </div>
+            <!-- הצגת מקשי מקלדת -->
+            <div class="flex items-center gap-2 border-r border-slate-700 pr-4">
+                <input type="checkbox" id="showLabels" checked class="w-4 h-4 accent-amber-400 cursor-pointer">
+                <label for="showLabels" class="text-sm text-slate-300 cursor-pointer">הצג מקשי מקלדת</label>
+            </div>
+            <!-- סוג גל צליל / כלי נגינה -->
+            <div class="flex items-center gap-2">
+                <label for="waveType" class="text-sm font-medium text-slate-300">כלי נגינה:</label>
+                <select id="waveType" class="bg-slate-700 text-white text-sm rounded px-2 py-1 border border-slate-600 focus:outline-none focus:border-amber-400">
+                    <option value="triangle">פסנתר קלאסי (Triangle)</option>
+                    <option value="guitar">גיטרה (Guitar Synth)</option>
+                    <option value="flute">חליל צד (Flute Soft)</option>
+                    <option value="sawtooth">סינתיסייזר (Synth Lead)</option>
+                    <option value="square">אורגן חשמלי (Organ Square)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- לוח מצב למידה -->
+        <div class="mb-6 w-full max-w-xl bg-slate-800 border border-amber-500/30 rounded-xl p-4 text-center shadow-lg">
+            <h2 class="text-lg font-bold text-amber-400 mb-2">מרכז למידה ותרגול לכלי נגינה</h2>
+            <div class="flex flex-wrap justify-center items-center gap-3 mb-3">
+                <select id="songSelect" class="bg-slate-900 text-amber-300 text-sm font-semibold rounded px-3 py-1.5 border border-amber-500/50 focus:outline-none">
+                    <option value="">-- בחר שיר לתרגול --</option>
+                    <!-- קלאסיים וילדים -->
+                    <option value="twinkle">יונתן הקטן / Twinkle Star</option>
+                    <option value="odeToJoy">אודה לשמחה (Ode to Joy)</option>
+                    <option value="happyBirthday">יום הולדת שמח</option>
+                    <option value="hallelujah">הללויה (Hallelujah)</option>
+                    <option value="furElise">לאליזה / Für Elise</option>
+                    <option value="maryLamb">Mary Had a Little Lamb</option>
+                    <!-- שירי עומר אדם -->
+                    <option value="shneiMeshugaim">שני משוגעים - עומר אדם</option>
+                    <option value="modeAni">מודה אני - עומר אדם</option>
+                    <option value="telAviv">תל אביב - עומר אדם</option>
+                    <!-- שירי ישראלים מגוונים -->
+                    <option value="alufHaolam">אלוף העולם - חנן בן ארי</option>
+                    <option value="imTirzi">אם תרצי - חנן בן ארי</option>
+                    <option value="tutim">תותים - אתניקס</option>
+                    <option value="nafshi">נפשי - ישי ריבו & מוטי שטיינמץ</option>
+                    <option value="lasony">לשוב הביתה - ישי ריבו</option>
+                    <option value="mimaamakim">ממעמקים - הפרויקט של עידן רייכל</option>
+                    <option value="machaor">מחכה - עידן רייכל / מירי מסיקה</option>
+                    <option value="shevetAchim">שבט אחים ואחיות</option>
+                    <option value="aniVeAta">אני ואתה - אריק איינשטיין</option>
+                    <option value="atarAshaer">עטור מצחך - אריק איינשטיין</option>
+                    <option value="luYehi">לו יהי - נעמי שמר</option>
+                    <option value="chai">חי - עופרה חזה</option>
+                </select>
+                <button id="startLearnBtn" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-1.5 rounded transition text-sm">התחל למידה</button>
+                <button id="stopLearnBtn" class="bg-slate-700 hover:bg-slate-600 text-white font-bold px-4 py-1.5 rounded transition text-sm hidden">סיום תרגול</button>
+            </div>
+            <div id="learningStatus" class="text-sm text-slate-300 h-6">
+                בחר שיר ולחץ "התחל למידה" כדי להתחיל לתרגל!
+            </div>
+        </div>
+
+        <!-- מקלדת הפסנתר -->
+        <div class="relative flex justify-center p-6 bg-amber-950/40 rounded-2xl border-4 border-amber-900 shadow-2xl overflow-x-auto max-w-full">
+            <div id="piano" class="relative flex h-64">
+                <!-- המקשים ייווצרו באופן דינמי באמצעות JS -->
+            </div>
+        </div>
+
+        <!-- מידע על התו המנוגן -->
+        <div class="mt-6 text-center h-8">
+            <span id="noteDisplay" class="text-2xl font-bold text-amber-400 transition-opacity opacity-0">C4</span>
+        </div>
+    </main>
+
+    <!-- מדריך מקשים בתחתית -->
+    <footer class="p-4 text-center text-xs text-slate-500 border-t border-slate-800">
+        <p>נגן באמצעות מקשי המקלדת (שתי אוקטבות) או באמצעות לחיצה/מגע עליהם!</p>
+    </footer>
+
+    <script>
+        // הגדרת תווי הפסנתר והתדרים שלהם (שתי אוקטבות מלאות - C3 עד C5)
+        const NOTES = [
+            // אוקטבה 3 (נמוכה)
+            { note: 'C3',  freq: 130.81, type: 'white', key: 'z' },
+            { note: 'C#3', freq: 138.59, type: 'black', key: 's' },
+            { note: 'D3',  freq: 146.83, type: 'white', key: 'x' },
+            { note: 'D#3', freq: 155.56, type: 'black', key: 'd' },
+            { note: 'E3',  freq: 164.81, type: 'white', key: 'c' },
+            { note: 'F3',  freq: 174.61, type: 'white', key: 'v' },
+            { note: 'F#3', freq: 185.00, type: 'black', key: 'g' },
+            { note: 'G3',  freq: 196.00, type: 'white', key: 'b' },
+            { note: 'G#3', freq: 207.65, type: 'black', key: 'h' },
+            { note: 'A3',  freq: 220.00, type: 'white', key: 'n' },
+            { note: 'A#3', freq: 233.08, type: 'black', key: 'j' },
+            { note: 'B3',  freq: 246.94, type: 'white', key: 'm' },
+            
+            // אוקטבה 4 (מרכזית)
+            { note: 'C4',  freq: 261.63, type: 'white', key: 'q' },
+            { note: 'C#4', freq: 277.18, type: 'black', key: '2' },
+            { note: 'D4',  freq: 293.66, type: 'white', key: 'w' },
+            { note: 'D#4', freq: 311.13, type: 'black', key: '3' },
+            { note: 'E4',  freq: 329.63, type: 'white', key: 'e' },
+            { note: 'F4',  freq: 349.23, type: 'white', key: 'r' },
+            { note: 'F#4', freq: 369.99, type: 'black', key: '5' },
+            { note: 'G4',  freq: 392.00, type: 'white', key: 't' },
+            { note: 'G#4', freq: 415.30, type: 'black', key: '6' },
+            { note: 'A4',  freq: 440.00, type: 'white', key: 'y' },
+            { note: 'A#4', freq: 466.16, type: 'black', key: '7' },
+            { note: 'B4',  freq: 493.88, type: 'white', key: 'u' },
+            { note: 'C5',  freq: 523.25, type: 'white', key: 'i' }
+        ];
+
+        // מאגר שירי למידה
+        const SONGS = {
+            twinkle: {
+                title: 'יונתן הקטן / Twinkle Star',
+                notes: ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4']
+            },
+            odeToJoy: {
+                title: 'אודה לשמחה',
+                notes: ['E4', 'E4', 'F4', 'G4', 'G4', 'F4', 'E4', 'D4', 'C4', 'C4', 'D4', 'E4', 'E4', 'D4', 'D4']
+            },
+            happyBirthday: {
+                title: 'יום הולדת שמח',
+                notes: ['C4', 'C4', 'D4', 'C4', 'F4', 'E4', 'C4', 'C4', 'D4', 'C4', 'G4', 'F4']
+            },
+            hallelujah: {
+                title: 'הללויה',
+                notes: ['C4', 'E4', 'G4', 'G4', 'A4', 'A4', 'C4', 'E4', 'G4', 'G4', 'A4', 'A4', 'F4', 'F4', 'F4', 'E4', 'E4', 'D4', 'C4']
+            },
+            furElise: {
+                title: 'לאליזה (Für Elise)',
+                notes: ['E4', 'D#4', 'E4', 'D#4', 'E4', 'B3', 'D4', 'C4', 'A3', 'C3', 'E3', 'A3', 'B3']
+            },
+            maryLamb: {
+                title: 'Mary Had a Little Lamb',
+                notes: ['E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4', 'D4', 'D4', 'D4', 'E4', 'G4', 'G4']
+            },
+            shneiMeshugaim: {
+                title: 'שני משוגעים - עומר אדם',
+                notes: ['E4', 'E4', 'E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'E4', 'D4', 'C4', 'B3', 'A3', 'C4', 'E4']
+            },
+            modeAni: {
+                title: 'מודה אני - עומר אדם',
+                notes: ['A3', 'C4', 'E4', 'E4', 'D4', 'E4', 'F4', 'E4', 'D4', 'C4', 'B3', 'C4', 'D4', 'C4', 'B3', 'A3']
+            },
+            telAviv: {
+                title: 'תל אביב - עומר אדם',
+                notes: ['E4', 'G4', 'A4', 'A4', 'G4', 'A4', 'C5', 'B4', 'A4', 'G4', 'E4', 'G4', 'A4']
+            },
+            alufHaolam: {
+                title: 'אלוף העולם - חנן בן ארי',
+                notes: ['A3', 'C4', 'E4', 'E4', 'E4', 'D4', 'C4', 'D4', 'E4', 'D4', 'C4', 'B3', 'A3']
+            },
+            imTirzi: {
+                title: 'אם תרצי - חנן בן ארי',
+                notes: ['E4', 'G4', 'A4', 'A4', 'A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'E4', 'F4', 'E4']
+            },
+            tutim: {
+                title: 'תותים - אתניקס',
+                notes: ['E4', 'E4', 'G4', 'A4', 'A4', 'G4', 'E4', 'D4', 'E4', 'G4', 'E4']
+            },
+            nafshi: {
+                title: 'נפשי - ישי ריבו',
+                notes: ['E4', 'E4', 'F4', 'G4', 'G4', 'F4', 'E4', 'D4', 'C4', 'D4', 'E4', 'E4', 'D4']
+            },
+            lasony: {
+                title: 'לשוב הביתה - ישי ריבו',
+                notes: ['A3', 'C4', 'D4', 'E4', 'E4', 'D4', 'C4', 'D4', 'E4', 'C4', 'B3', 'A3']
+            },
+            mimaamakim: {
+                title: 'ממעמקים - הפרויקט של עידן רייכל',
+                notes: ['A3', 'C4', 'E4', 'D4', 'C4', 'B3', 'C4', 'D4', 'B3', 'G3', 'A3']
+            },
+            machaor: {
+                title: 'מחכה - עידן רייכל',
+                notes: ['C4', 'E4', 'F4', 'G4', 'G4', 'F4', 'E4', 'F4', 'E4', 'D4', 'C4']
+            },
+            shevetAchim: {
+                title: 'שבט אחים ואחיות',
+                notes: ['C4', 'E4', 'G4', 'G4', 'A4', 'G4', 'E4', 'F4', 'E4', 'D4', 'C4']
+            },
+            aniVeAta: {
+                title: 'אני ואתה - אריק איינשטיין',
+                notes: ['C4', 'D4', 'E4', 'E4', 'E4', 'F4', 'E4', 'D4', 'C4', 'D4', 'E4', 'C4']
+            },
+            atarAshaer: {
+                title: 'עטור מצחך - אריק איינשטיין',
+                notes: ['E4', 'A4', 'G#4', 'A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'F4', 'E4']
+            },
+            luYehi: {
+                title: 'לו יהי - נעמי שמר',
+                notes: ['E4', 'G4', 'C5', 'B4', 'A4', 'G4', 'A4', 'G4', 'F4', 'E4', 'D4', 'C4']
+            },
+            chai: {
+                title: 'חי - עופרה חזה',
+                notes: ['A3', 'C4', 'D4', 'E4', 'E4', 'F4', 'E4', 'D4', 'C4', 'D4', 'E4']
+            }
+        };
+
+        // משתני מצב למידה
+        let isLearning = false;
+        let currentSong = null;
+        let currentNoteIndex = 0;
+
+        // יצירת AudioContext ליצירת צלילים
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // אלמנטים מה-DOM
+        const pianoElement = document.getElementById('piano');
+        const volumeInput = document.getElementById('volume');
+        const showLabelsCheckbox = document.getElementById('showLabels');
+        const waveTypeSelect = document.getElementById('waveType');
+        const noteDisplay = document.getElementById('noteDisplay');
+        const songSelect = document.getElementById('songSelect');
+        const startLearnBtn = document.getElementById('startLearnBtn');
+        const stopLearnBtn = document.getElementById('stopLearnBtn');
+        const learningStatus = document.getElementById('learningStatus');
+
+        // מעקב אחר מקשים פעילים למניעת חזרות מיותרות באירועי מקלדת
+        const activeKeys = new Set();
+
+        // יצירת הקלידים על המסך
+        function createPiano() {
+            pianoElement.innerHTML = '';
+            
+            // חישוב מיקומים עבור קלידים שחורים
+            let whiteKeyIndex = 0;
+
+            NOTES.forEach((noteData, index) => {
+                const keyEl = document.createElement('div');
+                keyEl.dataset.note = noteData.note;
+                keyEl.dataset.key = noteData.key;
+
+                if (noteData.type === 'white') {
+                    keyEl.className = `white-key w-10 sm:w-12 h-64 rounded-b-lg border border-slate-300 relative flex flex-col justify-end items-center pb-4 cursor-pointer z-10 shrink-0`;
+                    whiteKeyIndex++;
+                } else {
+                    keyEl.className = `black-key w-6 sm:w-8 h-40 rounded-b-md absolute z-20 cursor-pointer flex flex-col justify-end items-center pb-3 text-xs text-slate-300`;
+                    const keyWidth = window.innerWidth < 640 ? 40 : 48;
+                    const blackWidth = window.innerWidth < 640 ? 24 : 32;
+                    const leftPos = (whiteKeyIndex * keyWidth) - (blackWidth / 2); 
+                    keyEl.style.left = `${leftPos}px`;
+                }
+
+                // תווית שם המקש
+                const label = document.createElement('span');
+                label.className = `key-label text-[10px] sm:text-xs font-bold ${noteData.type === 'white' ? 'text-slate-600' : 'text-slate-300'}`;
+                label.innerText = showLabelsCheckbox.checked ? noteData.key.toUpperCase() : '';
+                keyEl.appendChild(label);
+
+                // אירועי עכבר ומגע
+                keyEl.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    playNote(noteData);
+                });
+                
+                keyEl.addEventListener('mouseenter', (e) => {
+                    if (e.buttons === 1) {
+                        playNote(noteData);
+                    }
+                });
+
+                keyEl.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    playNote(noteData);
+                });
+
+                pianoElement.appendChild(keyEl);
+            });
+        }
+
+        // הנגנת תו
+        function playNote(noteData) {
+            initAudio();
+
+            // יצירת אוסצילטור (מחולל תדר) וגיין (עוצמת שמע)
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            const selectedInstrument = waveTypeSelect.value;
+            
+            // הגדרת הגל לפי כלי הנגינה הנבחר
+            if (selectedInstrument === 'guitar') {
+                osc.type = 'sawtooth';
+            } else if (selectedInstrument === 'flute') {
+                osc.type = 'sine';
+            } else {
+                osc.type = selectedInstrument;
+            }
+
+            osc.frequency.setValueAtTime(noteData.freq, audioCtx.currentTime);
+
+            const masterVolume = parseFloat(volumeInput.value);
+            
+            // מעטפת צליל מותאמת לפי כלי נגינה
+            if (selectedInstrument === 'flute') {
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(masterVolume, audioCtx.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+            } else if (selectedInstrument === 'guitar') {
+                gainNode.gain.setValueAtTime(masterVolume, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
+            } else {
+                gainNode.gain.setValueAtTime(masterVolume, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+            }
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.5);
+
+            // עדכון ויזואלי של המקש
+            const keyEl = pianoElement.querySelector(`[data-note="${noteData.note}"]`);
+            if (keyEl) {
+                keyEl.classList.add('active');
+                setTimeout(() => keyEl.classList.remove('active'), 150);
+            }
+
+            // הצגת שם התו המנוגן
+            showNoteDisplay(noteData.note);
+
+            // בדיקה אם נמצאים במצב למידה
+            if (isLearning && currentSong) {
+                checkLearnedNote(noteData.note);
+            }
+        }
+
+        // ניהול מצב למידה
+        function startLearning() {
+            const songKey = songSelect.value;
+            if (!songKey) {
+                learningStatus.innerText = "אנא בחר שיר מהרשימה!";
+                learningStatus.className = "text-sm text-red-400 h-6 font-bold";
+                return;
+            }
+
+            isLearning = true;
+            currentSong = SONGS[songKey];
+            currentNoteIndex = 0;
+
+            startLearnBtn.classList.add('hidden');
+            stopLearnBtn.classList.remove('hidden');
+            songSelect.disabled = true;
+
+            highlightTargetNote();
+        }
+
+        function stopLearning() {
+            isLearning = false;
+            currentSong = null;
+            currentNoteIndex = 0;
+
+            startLearnBtn.classList.remove('hidden');
+            stopLearnBtn.classList.add('hidden');
+            songSelect.disabled = false;
+
+            // הסרת כל ההדגשות
+            document.querySelectorAll('.target').forEach(el => el.classList.remove('target'));
+            learningStatus.innerText = "מצב למידה הופסק. בחר שיר כדי להתחיל מחדש.";
+            learningStatus.className = "text-sm text-slate-300 h-6";
+        }
+
+        function highlightTargetNote() {
+            // ניקוי הדגשות קודמות
+            document.querySelectorAll('.target').forEach(el => el.classList.remove('target'));
+
+            if (!currentSong || currentNoteIndex >= currentSong.notes.length) {
+                // סיום השיר!
+                learningStatus.innerHTML = `<span class="text-green-400 font-bold">כל הכבוד! סיימת לנגן את השיר "${currentSong.title}" בהצלחה! 🎉</span>`;
+                setTimeout(() => stopLearning(), 3000);
+                return;
+            }
+
+            const targetNote = currentSong.notes[currentNoteIndex];
+            const targetKeyObj = NOTES.find(n => n.note === targetNote);
+            const keyEl = pianoElement.querySelector(`[data-note="${targetNote}"]`);
+
+            if (keyEl) {
+                keyEl.classList.add('target');
+            }
+
+            learningStatus.innerHTML = `נגן את התו: <span class="text-amber-400 font-bold text-base">${targetNote}</span> (מקש: <span class="uppercase font-bold text-white">${targetKeyObj ? targetKeyObj.key : ''}</span>) [${currentNoteIndex + 1}/${currentSong.notes.length}]`;
+            learningStatus.className = "text-sm text-slate-200 h-6";
+        }
+
+        function checkLearnedNote(playedNote) {
+            const targetNote = currentSong.notes[currentNoteIndex];
+            if (playedNote === targetNote) {
+                currentNoteIndex++;
+                highlightTargetNote();
+            }
+        }
+
+        // האזנה לכפתורי למידה
+        startLearnBtn.addEventListener('click', startLearning);
+        stopLearnBtn.addEventListener('click', stopLearning);
+
+        // הצגת התו שנוגן על המסך
+        let displayTimeout;
+        function showNoteDisplay(noteName) {
+            noteDisplay.innerText = noteName;
+            noteDisplay.style.opacity = '1';
+            clearTimeout(displayTimeout);
+            displayTimeout = setTimeout(() => {
+                noteDisplay.style.opacity = '0';
+            }, 1000);
+        }
+
+        // אירועי מקלדת פיזית
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return; // מניעת הפעלה חוזרת בלחיצה ממושכת
+            
+            const key = e.key.toLowerCase();
+            const noteData = NOTES.find(n => n.key === key);
+
+            if (noteData && !activeKeys.has(key)) {
+                activeKeys.add(key);
+                playNote(noteData);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            activeKeys.delete(key);
+        });
+
+        // שינוי תצוגת התוויות לפי תיבת הסימון
+        showLabelsCheckbox.addEventListener('change', () => {
+            const labels = document.querySelectorAll('.key-label');
+            labels.forEach(label => {
+                const parent = label.parentElement;
+                const key = parent.dataset.key;
+                label.innerText = showLabelsCheckbox.checked ? key.toUpperCase() : '';
+            });
+        });
+
+        // אתחול האפליקציה
+        createPiano();
+    </script>
+</body>
+</html>
