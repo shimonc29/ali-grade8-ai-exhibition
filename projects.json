@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1,
+    "author": "נדב גליק",
+    "title": "מדריך המעיינות של ישראל",
+    "category": "טבע וטיולים",
+    "description": "מדריך אינטראקטיבי למעיינות ברחבי ישראל, עם חיפוש, סינון וניווט.",
+    "emoji": "💧",
+    "color": "#0d9488",
+    "url": "projects/work-01.html"
+  },
+  {
+    "id": 2,
+    "author": "נדב גליק",
+    "title": "פסנתר וירטואלי ומאמן למידה",
+    "category": "מוזיקה",
+    "description": "נגינה בדפדפן לצד תרגול שירים וכלי נגינה שונים.",
+    "emoji": "🎹",
+    "color": "#7c3aed",
+    "url": "projects/work-02.html"
+  },
+  {
+    "id": 3,
+    "author": "צוריאל בן־נון",
+    "title": "מחולל השירים והמוזיקה",
+    "category": "מוזיקה",
+    "description": "יצירת מילים וצלילים בסגנונות מוזיקליים לפי נושא לבחירה.",
+    "emoji": "🎤",
+    "color": "#db2777",
+    "url": "projects/work-03.html"
+  },
+  {
+    "id": 4,
+    "author": "רועה שגיא",
+    "title": "מנהל תקציב אישי",
+    "category": "כלים שימושיים",
+    "description": "ניהול הכנסות והוצאות, תכנון תקציב והצגת נתונים.",
+    "emoji": "📊",
+    "color": "#2563eb",
+    "url": "projects/work-04.html"
+  },
+  {
+    "id": 5,
+    "author": "דביר בראונר",
+    "title": "קרב טנקים: זירת הדמדומים",
+    "category": "משחקים",
+    "description": "משחק קרב טנקים עם עיצוב זירה, שדרוגים ואפשרויות משחק.",
+    "emoji": "🛡️",
+    "color": "#ea580c",
+    "url": "projects/work-05.html"
+  },
+  {
+    "id": 6,
+    "author": "אליה גרינוולד",
+    "title": "ארץ המעיינות",
+    "category": "טבע וטיולים",
+    "description": "אתר מדריך למעיינות באזור מחולה עם מסננים ומידע למטיילים.",
+    "emoji": "🌿",
+    "color": "#059669",
+    "url": "projects/work-06.html"
+  },
+  {
+    "id": 7,
+    "author": "אליה גרינוולד",
+    "title": "Super Pixel World",
+    "category": "משחקים",
+    "description": "משחק פלטפורמה בסגנון רטרו עם שלבים, מטבעות ואתגרים.",
+    "emoji": "🍄",
+    "color": "#dc2626",
+    "url": "projects/work-07.html"
+  },
+  {
+    "id": 8,
+    "author": "דביר בראונר",
+    "title": "קרב טנקים בתלת־ממד",
+    "category": "משחקים",
+    "description": "קרב טנקים לשני שחקנים עם חנות שדרוגים ונשקים.",
+    "emoji": "🎮",
+    "color": "#0891b2",
+    "url": "projects/work-08.html"
+  },
+  {
+    "id": 9,
+    "author": "יהודה וולמן",
+    "title": "SportAll – עולם הספורט",
+    "category": "ספורט",
+    "description": "פורטל ספורט עם מרוצים, ענפים, תוכניות אימון ותוכן מקצועי.",
+    "emoji": "🏃",
+    "color": "#f97316",
+    "url": "projects/work-09.html"
+  },
+  {
+    "id": 10,
+    "author": "יונתן אלדר",
+    "title": "קטלוג רכבי שטח 4×4",
+    "category": "כלים שימושיים",
+    "description": "חיפוש וסינון רכבי שטח לפי מפרטים ונתונים טכניים.",
+    "emoji": "🚙",
+    "color": "#b45309",
+    "url": "projects/work-10.html"
+  },
+  {
+    "id": 11,
+    "author": "יוסף שילה",
+    "title": "אקדמיית ההשקעות",
+    "category": "למידה",
+    "description": "לוח בקרה לימודי להיכרות עם מדדים, מניות וגרפים.",
+    "emoji": "📈",
+    "color": "#0f766e",
+    "url": "projects/work-11.html"
+  },
+  {
+    "id": 12,
+    "author": "ינון גיאת",
+    "title": "סאונדבורד טראנס ופסנתר",
+    "category": "מוזיקה",
+    "description": "יצירת צלילים ולופים של טראנס, פסנתר וסינתיסייזר.",
+    "emoji": "🎛️",
+    "color": "#9333ea",
+    "url": "projects/work-12.html"
+  },
+  {
+    "id": 13,
+    "author": "ינון גיאת",
+    "title": "רץ המקצב",
+    "category": "משחקים",
+    "description": "משחק מכשולים שמשלב תנועה, ניקוד ויצירת צלילים.",
+    "emoji": "⚡",
+    "color": "#4f46e5",
+    "url": "projects/work-13.html"
+  },
+  {
+    "id": 14,
+    "author": "מלאכי אלבז",
+    "title": "זירת הנחשים – Snake IO",
+    "category": "משחקים",
+    "description": "משחק נחשים צבעוני עם יריבים, ניקוד ומפת זירה.",
+    "emoji": "🐍",
+    "color": "#16a34a",
+    "url": "projects/work-14.html"
+  },
+  {
+    "id": 15,
+    "author": "מלאכי קלמנטינובסקי",
+    "title": "עולם כלי הנגינה",
+    "category": "מוזיקה",
+    "description": "אקדמיה אינטראקטיבית להיכרות עם כלי נגינה, תווים וחידון מוזיקלי.",
+    "emoji": "🎼",
+    "color": "#ca8a04",
+    "url": "projects/work-15.html"
+  }
+]
