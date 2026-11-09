@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחולל השירים והמוזיקה</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glow-effect {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.25);
+        }
+        .equalizer-bar {
+            height: 15%;
+            transition: height 0.2s ease;
+        }
+        .equalizer-active .equalizer-bar {
+            animation: bounce 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes bounce {
+            0% { height: 15%; }
+            100% { height: 100%; }
+        }
+    </style>
+</head>
+<body class="text-slate-100 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <header class="text-center py-6 border-b border-indigo-500/20 bg-slate-900/60 rounded-2xl backdrop-blur-md glow-effect">
+            <div class="inline-block bg-indigo-600/20 text-indigo-400 px-4 py-1 rounded-full text-sm font-semibold mb-2">
+                🎤 יצירת מוזיקה בבינה מלאכותית
+            </div>
+            <h1 class="text-3xl md:text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+                מחולל השירים והסגנונות
+            </h1>
+            <p class="text-slate-300 text-sm md:text-base mt-2 max-w-xl mx-auto">
+                רשום על מה השיר ובאיזה סגנון, לחץ <span class="bg-indigo-600 text-white px-2 py-0.5 rounded font-bold">Enter</span> או על כפתור היצירה, והמוזיקה תחל לנגן!
+            </p>
+        </header>
+
+        <!-- Main Dynamic Player Section -->
+        <section class="bg-gradient-to-br from-indigo-950/80 via-slate-900/90 to-purple-950/80 border border-indigo-500/30 rounded-3xl p-6 glow-effect relative overflow-hidden">
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                <!-- Info & Control -->
+                <div class="w-full md:w-2/3 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="relative flex h-4 w-4">
+                          <span id="pingDot" class="hidden animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-4 w-4 bg-indigo-500"></span>
+                        </span>
+                        <h2 id="nowPlayingTitle" class="text-2xl font-bold text-white">אולפן הלחנה ושירה בלייב</h2>
+                    </div>
+                    
+                    <p id="nowPlayingStyle" class="text-indigo-200 text-sm font-medium">
+                        רשום נושא קצר למטה ולחץ Enter - המערכת תלחין ותשיר שיר מלא!
+                    </p>
+
+                    <!-- Play Control & Progress -->
+                    <div class="flex items-center gap-4 bg-slate-950/60 p-4 rounded-2xl border border-indigo-500/20">
+                        <button id="playPauseBtn" onclick="togglePlay()" class="w-14 h-14 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white flex items-center justify-center font-bold text-xl transition-all transform hover:scale-105 shadow-lg">
+                            <span id="playIcon">▶</span>
+                            <span id="pauseIcon" class="hidden">⏸</span>
+                        </button>
+                        
+                        <div class="flex-1 space-y-1">
+                            <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5">
+                                <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-pink-500 h-full rounded-full w-0 transition-all duration-300"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-400">
+                                <span id="currentTimeText">00:00</span>
+                                <span id="totalTimeText">01:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equalizer Animation Box -->
+                <div class="w-full md:w-1/3 bg-slate-950/80 border border-indigo-500/30 rounded-2xl p-6 flex items-center justify-center h-40">
+                    <div id="equalizerContainer" class="flex items-end gap-2 h-20">
+                        <div class="equalizer-bar w-3 bg-indigo-500 rounded-t" style="animation-duration: 0.6s;"></div>
+                        <div class="equalizer-bar w-3 bg-purple-500 rounded-t" style="animation-duration: 0.9s;"></div>
+                        <div class="equalizer-bar w-3 bg-pink-500 rounded-t" style="animation-duration: 0.4s;"></div>
+                        <div class="equalizer-bar w-3 bg-indigo-400 rounded-t" style="animation-duration: 0.7s;"></div>
+                        <div class="equalizer-bar w-3 bg-purple-400 rounded-t" style="animation-duration: 0.5s;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generated Lyrics Preview Box -->
+            <div class="mt-6 pt-6 border-t border-indigo-500/20">
+                <h3 class="text-sm font-bold text-indigo-300 mb-2 flex items-center gap-2">
+                    <span>🎵</span> מילות השיר המולחנות:
+                </h3>
+                <div id="lyricsDisplay" class="bg-slate-950/70 rounded-xl p-4 text-slate-200 text-sm font-mono whitespace-pre-line leading-relaxed max-h-48 overflow-y-auto border border-indigo-900/50">
+                    רשום נושא (לדוגמה: "אמונה ותקווה") ולחץ Enter ליצירת שיר מושר...
+                </div>
+            </div>
+
+            <div id="playerStatus" class="mt-4 text-center text-xs text-indigo-300">
+                🎤 המערכת מלחינה מילים מקוריות ושרה אותן בקצב ובסולם המוזיקלי
+            </div>
+        </section>
+
+        <!-- Form Inputs Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Prompt Input Box -->
+            <section class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between backdrop-blur-sm md:col-span-2">
+                <div>
+                    <h2 class="text-xl font-bold mb-2 text-white flex items-center gap-2">
+                        <span>✍️</span> מה נושא השיר שתרצה להלחין?
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4">הקלד נושא/רעיון ולחץ Enter. המערכת תכתוב מילים חדשות ותשיר אותן במנגינה מוזיקלית.</p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">נושא השיר</label>
+                            <textarea id="userPromptInput" rows="2" placeholder="לדוגמה: ירושלים של זהב / אמונה / שמחת חיים / געגועים" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 resize-none" onkeydown="handleEnterKey(event)"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">סגנון מוזיקלי</label>
+                                <input type="text" id="customStyleInput" placeholder="לדוגמה: פופ ים תיכוני קצבי, רוק אקוסטי מרגש, חסידי, R&B" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm" onkeydown="handleEnterKey(event)" value="פופ ים-תיכוני מקפיץ">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">אורך השיר</label>
+                                <select id="songLength" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
+                                    <option value="30">קצר (30 שניות)</option>
+                                    <option value="60" selected>בינוני (דקה 1)</option>
+                                    <option value="120">שיר מלא (2 דקות)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button onclick="generateFullSong()" class="flex-1 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg text-base flex items-center justify-center gap-2">
+                        <span>🎤</span> הלחן ופתח בשיר (Enter)
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        let audioCtx = null;
+        let isPlaying = false;
+        let synthInterval = null;
+        let speechSynth = window.speechSynthesis;
+        let currentUtterance = null;
+        let progressTimer = null;
+        let currentProgress = 0;
+        let totalDuration = 60;
+        let currentSongData = null;
+
+        // Scale selection based on music style
+        function getScaleFromStyleText(styleText) {
+            const text = (styleText || '').toLowerCase();
+            if (text.includes('רוק') || text.includes('rock') || text.includes('עצוב') || text.includes('מרגש')) {
+                return [220.00, 246.94, 261.63, 293.66, 329.63, 392.00]; // A Minor scale
+            } else if (text.includes('נשמה') || text.includes('soul') || text.includes('חסידי') || text.includes('שקט')) {
+                return [174.61, 196.00, 220.00, 261.63, 293.66, 329.63]; // F Major scale
+            } else if (text.includes('r&b') || text.includes('אורבני') || text.includes('היפ הופ') || text.includes('hip hop')) {
+                return [196.00, 220.00, 246.94, 293.66, 329.63, 392.00]; // G Major scale
+            } else {
+                return [261.63, 293.66, 329.63, 349.23, 392.00, 440.00]; // C Major scale (pop/mediterranean)
+            }
+        }
+
+        function handleEnterKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generateFullSong();
+            }
+        }
+
+        function createLyricsFromTopic(topic, durationSec) {
+            const cleanTopic = topic || "הדרך אל האור";
+            
+            const verse1 = [
+                `סיפור חדש מתחיל על ${cleanTopic}`,
+                `מילים שנכתבות ממעמקי הלב`,
+                `מבט קדימה אל עבר הדרך`,
+                `כשהשבילים נפתחים ברוח טובה`
+            ];
+
+            const chorus = [
+                `זה השיר שנכתב על ${cleanTopic}`,
+                `המנגינה שנוגעת בכל נשמה`,
+                `קול עולה ובוקע מן השקט`,
+                `תקווה שממלאה את הלב בשמחה`
+            ];
+
+            const verse2 = [
+                `בכל צעד מרגישים את המשמעות`,
+                `האור שמחמם ומאיר את הדרך`,
+                `מחשבות טובות שמביאות ברכה`,
+                `וכל רגע הופך לניגון מיוחד`
+            ];
+
+            const bridge = [
+                `מן המקום העמוק ביותר`,
+                `עולה צליל של התחדשות ושמחה`
+            ];
+
+            const outro = [
+                `והצליל נשאר איתנו תמיד`,
+                `סיום מתוק ומלא תקווה`
+            ];
+
+            let lines = [...verse1, ...chorus];
+            if (durationSec >= 60) {
+                lines = [...verse1, ...chorus, ...verse2, ...chorus];
+            }
+            if (durationSec >= 120) {
+                lines = [...verse1, ...chorus, ...verse2, ...bridge, ...chorus, ...outro];
+            }
+
+            return {
+                title: `שיר מוקדש ל: ${cleanTopic}`,
+                allLines: lines
+            };
+        }
+
+        function generateFullSong() {
+            const topicInput = document.getElementById('userPromptInput').value.trim();
+            const customStyle = document.getElementById('customStyleInput').value.trim();
+            const durationSelect = document.getElementById('songLength');
+            totalDuration = parseInt(durationSelect.value, 10) || 60;
+
+            const topic = topicInput || "הדרך אל האור";
+            currentSongData = createLyricsFromTopic(topic, totalDuration);
+
+            document.getElementById('nowPlayingTitle').innerText = currentSongData.title;
+            document.getElementById('nowPlayingStyle').innerText = `סגנון: ${customStyle || 'חופשי'} | משך: ${totalDuration} שניות`;
+            document.getElementById('lyricsDisplay').innerText = currentSongData.allLines.join('\n');
+            document.getElementById('totalTimeText').innerText = formatTime(totalDuration);
+
+            startAudioAndSpeech(currentSongData.allLines, customStyle);
+        }
+
+        async function startAudioAndSpeech(lines, styleText) {
+            stopAudio();
+
+            // Initialize or Resume Web Audio API Context
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            const scale = getScaleFromStyleText(styleText);
+            isPlaying = true;
+            currentProgress = 0;
+
+            // UI State updates
+            document.getElementById('playIcon').classList.add('hidden');
+            document.getElementById('pauseIcon').classList.remove('hidden');
+            document.getElementById('equalizerContainer').classList.add('equalizer-active');
+            document.getElementById('pingDot').classList.remove('hidden');
+
+            // 1. Play background melodic synth loop
+            let noteIndex = 0;
+            synthInterval = setInterval(() => {
+                if (!isPlaying || !audioCtx || audioCtx.state !== 'running') return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.value = scale[noteIndex % scale.length];
+                    noteIndex++;
+
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } catch (e) {
+                    console.error("Audio synth error", e);
+                }
+            }, 320);
+
+            // 2. Play speech synthesis (singing)
+            if ('speechSynthesis' in window) {
+                speechSynth.cancel();
+                const textToSing = lines.join('. ');
+                currentUtterance = new SpeechSynthesisUtterance(textToSing);
+                
+                // Select Hebrew voice if available
+                const voices = speechSynth.getVoices();
+                const hebrewVoice = voices.find(v => v.lang.includes('he') || v.lang.includes('HE'));
+                if (hebrewVoice) {
+                    currentUtterance.voice = hebrewVoice;
+                }
+                currentUtterance.lang = 'he-IL';
+
+                // Clamp speech rate to reasonable limits for natural speech
+                const calculatedRate = (lines.length * 3.5) / totalDuration;
+                currentUtterance.rate = Math.min(Math.max(calculatedRate, 0.7), 1.3);
+                currentUtterance.pitch = 1.1;
+
+                currentUtterance.onend = () => {
+                    stopAudio();
+                };
+
+                speechSynth.speak(currentUtterance);
+            }
+
+            // 3. Progress bar timer
+            progressTimer = setInterval(() => {
+                if (currentProgress < totalDuration) {
+                    currentProgress++;
+                    const percent = (currentProgress / totalDuration) * 100;
+                    document.getElementById('progressBar').style.width = `${percent}%`;
+                    document.getElementById('currentTimeText').innerText = formatTime(currentProgress);
+                } else {
+                    stopAudio();
+                }
+            }, 1000);
+        }
+
+        function togglePlay() {
+            if (!isPlaying) {
+                if (currentSongData) {
+                    const customStyle = document.getElementById('customStyleInput').value.trim();
+                    startAudioAndSpeech(currentSongData.allLines, customStyle);
+                } else {
+                    generateFullSong();
+                }
+            } else {
+                stopAudio();
+            }
+        }
+
+        function stopAudio() {
+            isPlaying = false;
+            if (synthInterval) clearInterval(synthInterval);
+            if (progressTimer) clearInterval(progressTimer);
+            if (speechSynth) speechSynth.cancel();
+            
+            if (audioCtx && audioCtx.state !== 'closed') {
+                try { 
+                    audioCtx.suspend(); 
+                } catch(e) {}
+            }
+
+            document.getElementById('playIcon').classList.remove('hidden');
+            document.getElementById('pauseIcon').classList.add('hidden');
+            document.getElementById('equalizerContainer').classList.remove('equalizer-active');
+            document.getElementById('pingDot').classList.add('hidden');
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('currentTimeText').innerText = '00:00';
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Pre-load Web Speech voices on page load
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+    </script>
+</body>
+</html>
