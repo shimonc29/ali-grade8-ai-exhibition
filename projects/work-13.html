@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רץ המקצב - משחק מכשולים מוזיקלי</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Assistant', sans-serif;
+            background: #090d16;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.7);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between items-center p-2 sm:p-4">
+
+    <!-- Header Navigation & Dashboard -->
+    <header class="w-full max-w-4xl bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 flex flex-wrap justify-between items-center z-20 gap-2">
+        <div class="flex items-center space-x-3 space-x-reverse">
+            <h1 class="text-xl sm:text-2xl font-black text-indigo-400 flex items-center gap-2">
+                <i class="fa-solid fa-bolt text-amber-400"></i> רץ המקצב
+            </h1>
+            <button id="soundToggle" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 border border-white/10">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+                <span id="soundStatus">צלילים פעילים</span>
+            </button>
+        </div>
+
+        <!-- Live Scoreboard -->
+        <div class="flex items-center gap-4 sm:gap-6 text-sm sm:text-base font-bold bg-black/40 px-4 py-1.5 rounded-xl border border-white/10">
+            <div>ניקוד: <span id="scoreText" class="text-amber-400 text-lg">0</span></div>
+            <div>רצף (Combo): <span id="comboText" class="text-indigo-400 text-lg">x1</span></div>
+            <div>שיא: <span id="highScoreText" class="text-emerald-400 text-lg">0</span></div>
+        </div>
+    </header>
+
+    <!-- Main Game Canvas Container -->
+    <main class="relative flex-1 w-full max-w-4xl flex items-center justify-center my-2">
+        <canvas id="gameCanvas" class="rounded-2xl border border-indigo-500/30 w-full h-full max-h-[600px]"></canvas>
+
+        <!-- Overlay Start Screen -->
+        <div id="startOverlay" class="absolute inset-0 bg-black/80 backdrop-blur-md rounded-2xl flex flex-col justify-center items-center text-center p-6 z-30">
+            <div class="text-5xl sm:text-6xl text-indigo-400 mb-4 animate-bounce">
+                <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold mb-2 text-white">מוכנים לרוץ ולנגן?</h2>
+            <p class="text-slate-300 max-w-md mb-6 text-sm sm:text-base">
+                השתמשו בחצי המקלדת כדי להתחמק ממכשולים. בכל פעם שתזוזו, תפיקו צליל מוזיקלי ותפתחו מנגינה קצבית!
+            </p>
+
+            <div class="bg-slate-800/80 p-4 rounded-xl border border-white/10 mb-6 text-right w-full max-w-xs space-y-2 text-xs sm:text-sm">
+                <div class="flex items-center justify-between"><span class="font-bold">חץ למעלה ↑</span> <span>קפיצה</span></div>
+                <div class="flex items-center justify-between"><span class="font-bold">חץ למטה ↓</span> <span>התכופפות</span></div>
+                <div class="flex items-center justify-between"><span class="font-bold">חצים ימינה/שמאלה → ←</span> <span>תנועה במסלולים</span></div>
+            </div>
+
+            <button id="startBtn" class="btn-glow bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-8 py-3 rounded-xl text-lg flex items-center gap-2">
+                <i class="fa-solid fa-play"></i> התחל משחק
+            </button>
+        </div>
+
+        <!-- Overlay Game Over Screen -->
+        <div id="gameOverOverlay" class="absolute inset-0 bg-black/90 backdrop-blur-md rounded-2xl flex flex-col justify-center items-center text-center p-6 z-30 hidden">
+            <div class="text-5xl text-rose-500 mb-3"><i class="fa-solid fa-circle-xmark"></i></div>
+            <h2 class="text-3xl font-black mb-1">המשחק הסתיים!</h2>
+            <p class="text-slate-400 mb-4">פגעת במכשול...</p>
+
+            <div class="bg-slate-800/80 p-4 rounded-xl border border-white/10 mb-6 w-full max-w-xs space-y-2 text-slate-200">
+                <div class="flex justify-between"><span>ניקוד שהשגת:</span> <span id="finalScore" class="font-bold text-amber-400">0</span></div>
+                <div class="flex justify-between"><span>רצף שיא:</span> <span id="finalCombo" class="font-bold text-indigo-400">x1</span></div>
+            </div>
+
+            <button id="restartBtn" class="btn-glow bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-8 py-3 rounded-xl text-lg flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> שחק שוב
+            </button>
+        </div>
+    </main>
+
+    <!-- Touch Mobile Controls -->
+    <footer class="w-full max-w-4xl grid grid-cols-4 gap-2 sm:hidden mb-2">
+        <button id="btnLeft" class="bg-slate-800 active:bg-slate-700 p-3 rounded-xl text-xl font-bold flex justify-center items-center border border-white/10"><i class="fa-solid fa-arrow-left"></i></button>
+        <button id="btnJump" class="bg-indigo-700 active:bg-indigo-600 p-3 rounded-xl text-xl font-bold flex justify-center items-center border border-white/10"><i class="fa-solid fa-arrow-up"></i></button>
+        <button id="btnDuck" class="bg-indigo-700 active:bg-indigo-600 p-3 rounded-xl text-xl font-bold flex justify-center items-center border border-white/10"><i class="fa-solid fa-arrow-down"></i></button>
+        <button id="btnRight" class="bg-slate-800 active:bg-slate-700 p-3 rounded-xl text-xl font-bold flex justify-center items-center border border-white/10"><i class="fa-solid fa-arrow-right"></i></button>
+    </footer>
+
+    <!-- Musical Audio Synthesizer -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                // Rich Pentatonic Piano Scale across multiple octaves
+                this.scale = [
+                    261.63, 293.66, 329.63, 392.00, 440.00, // Octave 4 (C4, D4, E4, G4, A4)
+                    523.25, 587.33, 659.25, 783.99, 880.00, // Octave 5 (C5, D5, E5, G5, A5)
+                    1046.50 // C6
+                ];
+                this.noteIndex = 0;
+                this.bgTimer = null;
+                this.bgStep = 0;
+                // Background Piano Loop Pattern (Notes indices in scale)
+                this.bgMelody = [0, 2, 3, 5, 4, 2, 3, 1, 0, 3, 5, 7, 5, 4, 2, 0];
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Realistic Acoustic Piano Synthesis using multiple harmonic overtones
+            playPianoNote(freq, duration = 1.2, volume = 0.3) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime;
+                    
+                    // Master gain for envelope
+                    const masterGain = this.ctx.createGain();
+                    masterGain.gain.setValueAtTime(volume, now);
+                    masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                    masterGain.connect(this.ctx.destination);
+
+                    // Fundamental tone (Triangle wave for warmth)
+                    const osc1 = this.ctx.createOscillator();
+                    osc1.type = 'triangle';
+                    osc1.frequency.setValueAtTime(freq, now);
+                    osc1.connect(masterGain);
+                    osc1.start(now);
+                    osc1.stop(now + duration);
+
+                    // Harmonic Overtones (Sine waves at 2x and 3x frequency for piano body)
+                    const osc2 = this.ctx.createOscillator();
+                    const gain2 = this.ctx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 2, now);
+                    gain2.gain.setValueAtTime(volume * 0.4, now);
+                    gain2.gain.exponentialRampToValueAtTime(0.0001, now + (duration * 0.7));
+                    osc2.connect(gain2);
+                    gain2.connect(masterGain);
+                    osc2.start(now);
+                    osc2.stop(now + duration);
+
+                    const osc3 = this.ctx.createOscillator();
+                    const gain3 = this.ctx.createGain();
+                    osc3.type = 'sine';
+                    osc3.frequency.setValueAtTime(freq * 3, now);
+                    gain3.gain.setValueAtTime(volume * 0.15, now);
+                    gain3.gain.exponentialRampToValueAtTime(0.0001, now + (duration * 0.4));
+                    osc3.connect(gain3);
+                    gain3.connect(masterGain);
+                    osc3.start(now);
+                    osc3.stop(now + duration);
+
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            playMoveSound(actionType) {
+                if (this.muted) return;
+                this.init();
+
+                let freq;
+                if (actionType === 'jump') {
+                    freq = 783.99; // G5 - High piano key
+                } else if (actionType === 'duck') {
+                    freq = 196.00; // G3 - Low bass piano key
+                } else {
+                    freq = this.scale[this.noteIndex % this.scale.length];
+                    this.noteIndex++;
+                }
+
+                this.playPianoNote(freq, 1.4, 0.4);
+            }
+
+            startBackgroundPiano() {
+                this.stopBackgroundPiano();
+                if (this.muted) return;
+
+                const playStep = () => {
+                    const scaleIdx = this.bgMelody[this.bgStep % this.bgMelody.length];
+                    const freq = this.scale[scaleIdx];
+                    // Soft accompaniment notes
+                    this.playPianoNote(freq, 0.8, 0.12);
+                    this.bgStep++;
+                    this.bgTimer = setTimeout(playStep, 250); // Rhythmic 120 BPM tempo
+                };
+
+                playStep();
+            }
+
+            stopBackgroundPiano() {
+                if (this.bgTimer) {
+                    clearTimeout(this.bgTimer);
+                    this.bgTimer = null;
+                }
+            }
+
+            playHitSound() {
+                this.stopBackgroundPiano();
+                if (this.muted || !this.ctx) return;
+                this.playPianoNote(130.81, 0.6, 0.5); // Low C2 discordant hit
+            }
+        }
+
+        const soundSynth = new SoundEngine();
+    </script>
+
+    <!-- Main Game Canvas Engine Script -->
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game State Variables
+        let isRunning = false;
+        let score = 0;
+        let combo = 1;
+        let maxCombo = 1;
+        let highScore = localStorage.getItem('runner_highscore') || 0;
+        let speed = 6;
+        let frameCount = 0;
+
+        // Lane setup (3 Lanes)
+        const lanes = [0, 1, 2]; // Left, Center, Right
+        let currentLane = 1;
+
+        // Player Attributes
+        const player = {
+            lane: 1,
+            x: 0,
+            y: 0,
+            width: 44,
+            height: 60,
+            isJumping: false,
+            jumpVelocity: 0,
+            jumpOffsetY: 0,
+            isDucking: false,
+            duckTimer: 0
+        };
+
+        // Obstacles array
+        let obstacles = [];
+
+        // DOM elements
+        const scoreText = document.getElementById('scoreText');
+        const comboText = document.getElementById('comboText');
+        const highScoreText = document.getElementById('highScoreText');
+        const startOverlay = document.getElementById('startOverlay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+
+        highScoreText.innerText = highScore;
+
+        // Resize Canvas dynamically
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            if (!isRunning) return;
+
+            if (e.key === 'ArrowLeft' || e.key === 'a') {
+                if (currentLane > 0) {
+                    currentLane--;
+                    soundSynth.playMoveSound('left');
+                    addCombo();
+                }
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                if (currentLane < 2) {
+                    currentLane++;
+                    soundSynth.playMoveSound('right');
+                    addCombo();
+                }
+            } else if ((e.key === 'ArrowUp' || e.key === 'w') && !player.isJumping) {
+                player.isJumping = true;
+                player.jumpVelocity = 14;
+                soundSynth.playMoveSound('jump');
+                addCombo();
+            } else if ((e.key === 'ArrowDown' || e.key === 's') && !player.isDucking) {
+                player.isDucking = true;
+                player.duckTimer = 25;
+                soundSynth.playMoveSound('duck');
+                addCombo();
+            }
+        });
+
+        // Mobile Touch Controls
+        document.getElementById('btnLeft').addEventListener('click', () => {
+            if (isRunning && currentLane > 0) { currentLane--; soundSynth.playMoveSound('left'); addCombo(); }
+        });
+        document.getElementById('btnRight').addEventListener('click', () => {
+            if (isRunning && currentLane < 2) { currentLane++; soundSynth.playMoveSound('right'); addCombo(); }
+        });
+        document.getElementById('btnJump').addEventListener('click', () => {
+            if (isRunning && !player.isJumping) { player.isJumping = true; player.jumpVelocity = 14; soundSynth.playMoveSound('jump'); addCombo(); }
+        });
+        document.getElementById('btnDuck').addEventListener('click', () => {
+            if (isRunning && !player.isDucking) { player.isDucking = true; player.duckTimer = 25; soundSynth.playMoveSound('duck'); addCombo(); }
+        });
+
+        function addCombo() {
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            comboText.innerText = `x${combo}`;
+        }
+
+        // Sound Toggle
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundSynth.muted = !soundSynth.muted;
+            document.getElementById('soundIcon').className = soundSynth.muted ? 'fa-solid fa-volume-xmark text-rose-400' : 'fa-solid fa-volume-high text-emerald-400';
+            document.getElementById('soundStatus').innerText = soundSynth.muted ? 'מושתק' : 'צלילים פעילים';
+            if (soundSynth.muted) {
+                soundSynth.stopBackgroundPiano();
+            } else if (isRunning) {
+                soundSynth.startBackgroundPiano();
+            }
+        });
+
+        // Start / Reset
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        function startGame() {
+            soundSynth.init();
+            startOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+
+            score = 0;
+            combo = 1;
+            maxCombo = 1;
+            speed = 6;
+            currentLane = 1;
+            obstacles = [];
+            player.isJumping = false;
+            player.isDucking = false;
+            player.jumpOffsetY = 0;
+
+            scoreText.innerText = '0';
+            comboText.innerText = 'x1';
+
+            isRunning = true;
+            soundSynth.startBackgroundPiano();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function spawnObstacle() {
+            const lane = Math.floor(Math.random() * 3);
+            const types = ['low', 'high', 'full']; // low = duck under, high = jump over, full = shift lane
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            obstacles.push({
+                lane: lane,
+                z: canvas.height,
+                type: type,
+                width: 50,
+                passed: false
+            });
+        }
+
+        // Main Animation & Physics Loop
+        function gameLoop() {
+            if (!isRunning) return;
+
+            frameCount++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Perspective Grid / Road
+            drawRoad();
+
+            // Handle Jump Physics
+            if (player.isJumping) {
+                player.jumpOffsetY += player.jumpVelocity;
+                player.jumpVelocity -= 0.8;
+                if (player.jumpOffsetY <= 0) {
+                    player.jumpOffsetY = 0;
+                    player.isJumping = false;
+                }
+            }
+
+            // Handle Duck Timer
+            if (player.isDucking) {
+                player.duckTimer--;
+                if (player.duckTimer <= 0) {
+                    player.isDucking = false;
+                }
+            }
+
+            // Target Lane Interpolation
+            const laneWidth = canvas.width / 4;
+            const targetX = (currentLane + 1) * laneWidth;
+            player.x += (targetX - player.x) * 0.25;
+            player.y = canvas.height - 100 - player.jumpOffsetY;
+
+            // Spawn Obstacles Periodically
+            if (frameCount % Math.max(25, Math.floor(60 - speed * 2)) === 0) {
+                spawnObstacle();
+            }
+
+            // Speed progression
+            speed += 0.001;
+
+            // Update & Render Obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.z -= speed;
+
+                const obsX = (obs.lane + 1) * laneWidth;
+                const obsY = obs.z;
+
+                // Render Obstacle with glowing effect
+                ctx.save();
+                if (obs.type === 'high') {
+                    ctx.fillStyle = '#f43f5e'; // Jump over (Red)
+                    ctx.shadowColor = '#f43f5e';
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(obsX - 30, obsY, 60, 20);
+                } else if (obs.type === 'low') {
+                    ctx.fillStyle = '#3b82f6'; // Duck under (Blue)
+                    ctx.shadowColor = '#3b82f6';
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(obsX - 30, obsY - 60, 60, 40);
+                } else {
+                    ctx.fillStyle = '#a855f7'; // Full block (Purple)
+                    ctx.shadowColor = '#a855f7';
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(obsX - 30, obsY - 50, 60, 70);
+                }
+                ctx.restore();
+
+                // Collision Detection
+                if (Math.abs(obsY - player.y) < 30 && currentLane === obs.lane) {
+                    let hit = true;
+                    if (obs.type === 'high' && player.jumpOffsetY > 30) hit = false;
+                    if (obs.type === 'low' && player.isDucking) hit = false;
+
+                    if (hit) {
+                        endGame();
+                        return;
+                    }
+                }
+
+                // Pass obstacle scoring
+                if (obs.z < player.y - 40 && !obs.passed) {
+                    obs.passed = true;
+                    score += 10 * combo;
+                    scoreText.innerText = score;
+                }
+
+                // Remove out of bounds
+                if (obs.z < -50) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // Draw Player Character
+            drawPlayer();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function drawRoad() {
+            const laneWidth = canvas.width / 4;
+            ctx.strokeStyle = 'rgba(99, 102, 241, 0.2)';
+            ctx.lineWidth = 2;
+
+            // Lane Divider Lines
+            for (let i = 1; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * laneWidth, 0);
+                ctx.lineTo(i * laneWidth, canvas.height);
+                ctx.stroke();
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.shadowColor = '#6366f1';
+            ctx.shadowBlur = 20;
+
+            const pHeight = player.isDucking ? 30 : player.height;
+            const pY = player.isDucking ? player.y + 30 : player.y;
+
+            // Neon Player Box
+            ctx.fillStyle = '#818cf8';
+            ctx.beginPath();
+            ctx.roundRect(player.x - player.width / 2, pY - pHeight, player.width, pHeight, 8);
+            ctx.fill();
+
+            // Inner Accent Core
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(player.x - 10, pY - pHeight + 10, 20, pHeight - 20, 4);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function endGame() {
+            isRunning = false;
+            soundSynth.playHitSound();
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('runner_highscore', highScore);
+                highScoreText.innerText = highScore;
+            }
+
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('finalCombo').innerText = `x${maxCombo}`;
+            gameOverOverlay.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
