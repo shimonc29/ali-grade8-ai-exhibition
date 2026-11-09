@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מעיינות בארץ ישראל</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Heebo -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        water: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                        },
+                        nature: {
+                            100: '#ecfdf5',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Heebo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #f8fafc;
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px -10px rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-water-700 via-water-600 to-nature-700 text-white py-12 px-4 shadow-lg relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="max-w-6xl text-center relative z-10 container mx-auto">
+            <span class="inline-block bg-white/20 backdrop-blur-sm text-white px-4 py-1 rounded-full text-sm font-semibold mb-3">
+                <i class="fa-solid font-bold fa-water ml-1"></i> טבע ופינות חמד בישראל
+            </span>
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">מדריך 300 המעיינות של ישראל</h1>
+            <p class="text-lg md:text-xl text-water-100 max-w-2xl mx-auto font-light">
+                מסלולים, מים צלולים ונופים מרהיבים. בחרו את המעיין הבא שלכם, סמנו לייק וצאו לדרך בלחיצה אחת ל-Waze!
+            </p>
+        </div>
+    </header>
+
+    <!-- Filters & Search Section -->
+    <section class="max-w-6xl mx-auto px-4 -mt-6 relative z-20 container">
+        <div class="bg-white rounded-2xl shadow-md p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-100">
+            <!-- Search Bar -->
+            <div class="relative w-full md:w-96">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="searchInput" onkeyup="filterSprings()" placeholder="חפש מעיין או אזור..." 
+                       class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-water-500 text-sm">
+            </div>
+            
+            <!-- Navigation Tabs & Region Filters -->
+            <div class="flex flex-wrap gap-2 w-full md:w-auto justify-center" id="regionFilters">
+                <button onclick="switchTab('springs')" id="tabSpringsBtn" class="bg-water-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-water"></i> מעיינות
+                </button>
+                <button onclick="switchTab('articles')" id="tabArticlesBtn" class="bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-newspaper"></i> מאמרים ומדריכים
+                </button>
+            </div>
+        </div>
+
+        <!-- Secondary Region Filter Bar (Visible in Springs View) -->
+        <div id="subRegionFilters" class="flex flex-wrap gap-2 justify-center mt-4">
+            <button onclick="setFilter('all')" class="filter-btn active bg-water-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">הכל</button>
+            <button onclick="setFilter('featured')" class="filter-btn bg-amber-500 text-white hover:bg-amber-600 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1"><i class="fa-solid fa-star"></i> מומלצים</button>
+            <button onclick="setFilter('צפון')" class="filter-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">צפון וגולן</button>
+            <button onclick="setFilter('מרכז')" class="filter-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">מרכז וירושלים</button>
+            <button onclick="setFilter('דרום')" class="filter-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition">דרום וים המלח</button>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto px-4 py-10 flex-grow container">
+        <!-- Springs View -->
+        <div id="springsSection">
+            <div id="springsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Springs will be dynamically loaded via JS -->
+            </div>
+
+            <!-- No Results Message -->
+            <div id="noResults" class="hidden text-center py-16">
+                <i class="fa-solid fa-compass text-5xl text-slate-300 mb-4"></i>
+                <h3 class="text-xl font-bold text-slate-600 mb-1">לא נמצאו מעיינות</h3>
+                <p class="text-slate-400">נסה לחפש מילה אחרת או לבחור אזור שונה</p>
+            </div>
+        </div>
+
+        <!-- Articles View (Hidden by default) -->
+        <div id="articlesSection" class="hidden">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 border-r-4 border-water-600 pr-3">מאמרים ומדריכי טיולים</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="articlesGrid">
+                <!-- Articles dynamically generated -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 px-4 text-center mt-auto border-t border-slate-800">
+        <div class="max-w-6xl mx-auto container">
+            <p class="text-sm mb-2">שמרו על הנקיון והטבע בארצנו היפה 🌿</p>
+            <p class="text-xs text-slate-500">כל הזכויות שמורות &copy; 2026 - המדריך למעיינות בישראל</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Data and Functions -->
+    <script>
+        // List of springs integrated directly from user data
+        const springsData = [
+            // North Region
+            {
+                id: 1,
+                name: "עין דבש",
+                region: "צפון",
+                area: "דרום רמת הגולן",
+                description: "בריכה קטנה ומוצלת תחת עצי תאנה עם מים צלולים וצוננים.",
+                features: ["מוצל", "רדוד", "מנוחה שקטה"],
+                wazeLocation: "עין דבש דרום הגולן",
+                mapSearch: "עין דבש",
+                imageUrl: "https://images.unsplash.com/photo-1544830728-8dedf3e7fba7?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-0.8 מטר",
+                likes: 112,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 2,
+                name: "עין אמפי",
+                region: "צפון",
+                area: "מרכז הגולן",
+                description: "בריכה עגולה עמוקה הבנויה מאבני בזלת ומוקפת עצי איקליפטוס.",
+                features: ["בריכה עמוקה", "עצי איקליפטוס", "שחיינים"],
+                wazeLocation: "עין אמפי",
+                mapSearch: "עין אמפי",
+                imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.8 מטר",
+                likes: 195,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 3,
+                name: "עין שוקק",
+                region: "צפון",
+                area: "עמק המעיינות",
+                description: "בריכה רחבת ידיים עם מים צלולים בגוון טורקיז ופארק מונגש.",
+                features: ["נגיש לעגלות", "בריכה צלולה", "פארק מוסדר"],
+                wazeLocation: "עין שוקק",
+                mapSearch: "עין שוקק",
+                imageUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.5 מטר",
+                likes: 289,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 4,
+                name: "עין מודע",
+                region: "צפון",
+                area: "עמק המעיינות",
+                description: "בריכה גדולה ועמוקה מוקפת חורשת איקליפטוסים גדולה עם שולחנות פיקניק.",
+                features: ["שולחנות פיקניק", "חורשה מוצלת", "קבוצות"],
+                wazeLocation: "עין מודע",
+                mapSearch: "עין מודע",
+                imageUrl: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.5 מטר",
+                likes: 240,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 5,
+                name: "עין הנצי\"ב",
+                region: "צפון",
+                area: "עמק המעיינות",
+                description: "בריכה עמוקה וצלולה במיוחד עם מים זורמים וצל טבעי.",
+                features: ["מים צלולים", "צל טבעי", "שחיינים"],
+                wazeLocation: "עין הנציב",
+                mapSearch: "עין הנציב",
+                imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-2.0 מטר",
+                likes: 178,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 6,
+                name: "עין נזיר (עין תינה)",
+                region: "צפון",
+                area: "עמק החולה",
+                description: "מסלול הליכה במים הזורמים מתוך צינור ומעיין הפורץ בין עצי תאנה.",
+                features: ["מסלול רטוב", "עצי תאנה", "למשפחות"],
+                wazeLocation: "עין תינה",
+                mapSearch: "עין תינה",
+                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop",
+                depth: "רדוד - זרימה",
+                likes: 210,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 7,
+                name: "עין דבשה",
+                region: "צפון",
+                area: "עמק החולה / גליל עליון",
+                description: "מסלול מים רדודים וקצרים המוביל לטחנת קמח עתיקה.",
+                features: ["ילדים קטנים", "טחנת קמח", "מוצל"],
+                wazeLocation: "עין דבשה",
+                mapSearch: "עין דבשה",
+                imageUrl: "https://images.unsplash.com/photo-1544830728-8dedf3e7fba7?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-30 ס״מ",
+                likes: 165,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 8,
+                name: "עין שוירח",
+                region: "צפון",
+                area: "דרום רמת הגולן",
+                description: "בריכת בטון מוצלת שנבנתה על ידי סורים ושוקמה על ידי תושבי האזור.",
+                features: ["בריכת בטון", "פינה שקטה", "מוצל"],
+                wazeLocation: "עין שוירח",
+                mapSearch: "עין שוירח",
+                imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.2 מטר",
+                likes: 95,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 9,
+                name: "עין איה",
+                region: "צפון",
+                area: "דרום הגולן (מצר)",
+                description: "בריכת בטון המשקיפה למשולש הגבולות (ישראל, ירדן, סוריה).",
+                features: ["נוף מרהיב", "משולש הגבולות", "צעירים"],
+                wazeLocation: "עין איה",
+                mapSearch: "עין איה",
+                imageUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.5 מטר",
+                likes: 310,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 10,
+                name: "עין כנף (דיר עזאז)",
+                region: "צפון",
+                area: "דרום הגולן",
+                description: "בריכה משוקמת לצד שרידי בית כנסת עתיק, מוצלת ומטופחת.",
+                features: ["בית כנסת עתיק", "מטופח", "משפחות"],
+                wazeLocation: "עין כנף",
+                mapSearch: "עין כנף",
+                imageUrl: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.0 מטר",
+                likes: 140,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 11,
+                name: "עין חרדלית",
+                region: "צפון",
+                area: "גליל מערבי (נחל כזיב)",
+                description: "פינת חמד נגישה בנחל כזיב עם זרימת מים רדודים וצוננים.",
+                features: ["נחל כזיב", "שכשוך קל", "נגיש"],
+                wazeLocation: "עין חרדלית",
+                mapSearch: "עין חרדלית",
+                imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop",
+                depth: "ברכיים",
+                likes: 205,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 12,
+                name: "עין חרדל (עין פשחור)",
+                region: "צפון",
+                area: "גליל עליון",
+                description: "מעיין פינתי וקטן הזורם לתוך בריכה קטנה בלב החורש.",
+                features: ["פינתי וקטן", "לב החורש", "שקט"],
+                wazeLocation: "עין חרדל",
+                mapSearch: "עין חרדל",
+                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-60 ס״מ",
+                likes: 82,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 13,
+                name: "עין שוקף",
+                region: "צפון",
+                area: "רכס הכרמל",
+                description: "מעיין קטן הנובע לתוך בריכת אבן בין עצי הכרמל.",
+                features: ["רכס הכרמל", "בריכת אבן", "מטיילים"],
+                wazeLocation: "עין שוקף",
+                mapSearch: "עין שוקף",
+                imageUrl: "https://images.unsplash.com/photo-1544830728-8dedf3e7fba7?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-70 ס״מ",
+                likes: 76,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 14,
+                name: "עין אלרואי",
+                region: "צפון",
+                area: "עמק יזרעאל (טבעון)",
+                description: "בריכה עמוקה ונקייה לצד פארק תחנת הרכבת ההיסטורית.",
+                features: ["תחנת רכבת היסטורית", "בריכה עמוקה", "קל להגעה"],
+                wazeLocation: "מעיין אלרואי",
+                mapSearch: "עין אלרואי",
+                imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.6 מטר",
+                likes: 220,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 15,
+                name: "עין קששת",
+                region: "צפון",
+                area: "עמק יזרעאל",
+                description: "מעיין נובע המזין בריכה קטנה ופסטורלית בלב השדות.",
+                features: ["בלב השדות", "פסטורלי", "פיקניק"],
+                wazeLocation: "עין קששת",
+                mapSearch: "עין קששת",
+                imageUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-80 ס״מ",
+                likes: 68,
+                isFeatured: false,
+                userLiked: false
+            },
+
+            // Center & Jerusalem Region
+            {
+                id: 16,
+                name: "עין קובי",
+                region: "מרכז",
+                area: "הרי ירושלים (מבוא ביתר)",
+                description: "מעיין נקבה עתיק הזורם למבנה תת-קרקעי ולבריכת אגירה בחורשת אורנים.",
+                features: ["נקבה עתיקה", "חורשת אורנים", "פיקניק"],
+                wazeLocation: "עין קובי",
+                mapSearch: "עין קובי",
+                imageUrl: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.2 מטר",
+                likes: 185,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 17,
+                name: "עין לבן",
+                region: "מרכז",
+                area: "הרי ירושלים (עמינדב)",
+                description: "שתי בריכות אגירה גדולות ומשופצות מוקפות עצי פרי וטרסות.",
+                features: ["בריכות אגירה", "עצי פרי", "טרסות יפות"],
+                wazeLocation: "עין לבן",
+                mapSearch: "עין לבן",
+                imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.5 מטר",
+                likes: 290,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 18,
+                name: "עין חנדק",
+                region: "מרכז",
+                area: "הרי ירושלים (עין כרם)",
+                description: "נקבות מים עמוקות ומרשימות החצובות בסלע (נדרש פנס).",
+                features: ["נקבות מים", "חצוב בסלע", "הרפתקני"],
+                wazeLocation: "עין חנדק",
+                mapSearch: "עין חנדק",
+                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop",
+                depth: "עד המותניים",
+                likes: 215,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 19,
+                name: "עין איתמר",
+                region: "מרכז",
+                area: "הרי ירושלים (אורה)",
+                description: "בריכת אבן צלולה וקטנה מול נוף הרי ירושלים.",
+                features: ["נוף ההרים", "בריכת אבן", "פינה רומנטית"],
+                wazeLocation: "עין איתמר",
+                mapSearch: "עין איתמר",
+                imageUrl: "https://images.unsplash.com/photo-1544830728-8dedf3e7fba7?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.0 מטר",
+                likes: 130,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 20,
+                name: "עין חניה",
+                region: "מרכז",
+                area: "הרי ירושלים (נחל רפאים)",
+                description: "אתר מורשת משוקם עם בריכה גדולה, מערכת מים עתיקה ומבנה קשתות.",
+                features: ["אתר מורשת", "מבנה קשתות", "שמורה מוסדרת"],
+                wazeLocation: "גן לאומי עין חניה",
+                mapSearch: "עין חניה",
+                imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.8 מטר",
+                likes: 340,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 21,
+                name: "עין לימון (עין למון)",
+                region: "מרכז",
+                area: "הרי ירושלים (אבו גוש)",
+                description: "בריכת אבן קטנה למרגלות הכפר אבו גוש בלב נחל חלילים.",
+                features: ["נחל חלילים", "מסלול קצר", "בריכת אבן"],
+                wazeLocation: "עין לימון",
+                mapSearch: "עין לימון",
+                imageUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-80 ס״מ",
+                likes: 110,
+                isFeatured: false,
+                userLiked: false
+            },
+            {
+                id: 22,
+                name: "עין סטאף (עין כפר)",
+                region: "מרכז",
+                area: "הרי ירושלים",
+                description: "חקלאות שלחין עתיקה, נקבת מים פתוחה להליכה ובריכת אגירה.",
+                features: ["חקלאות עתיקה", "נקבה רטובה", "טיול משפחות"],
+                wazeLocation: "סטאף",
+                mapSearch: "סטאף",
+                imageUrl: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.2 מטר",
+                likes: 270,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 23,
+                name: "עין מבוע",
+                region: "מרכז",
+                area: "מדבר יהודה (נחל פרת)",
+                description: "מעיין פועם המתרוקן ומתמלא חליפות בתוך בריכת בטון עגולה.",
+                features: ["מעיין פועם", "נוף מדברי", "בריכה עגולה"],
+                wazeLocation: "עין מבוע",
+                mapSearch: "עין מבוע",
+                imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop",
+                depth: "משתנה (עד 2 מטר)",
+                likes: 385,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 24,
+                name: "עין פרת",
+                region: "מרכז",
+                area: "מדבר יהודה",
+                description: "נווה מדבר מרשים עם בריכות טבעיות, מנזר קלנטון וצמחייה עשירה.",
+                features: ["נווה מדבר", "מנזר עתיק", "בריכות טבעיות"],
+                wazeLocation: "שמורת טבע עין פרת",
+                mapSearch: "עין פרת",
+                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.5 מטר",
+                likes: 320,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 25,
+                name: "עין מזור",
+                region: "מרכז",
+                area: "שפלה (סמוך אלעד)",
+                description: "בריכת בטון קטנה ומזינה בסמוך למבני עתיקות רנתיס.",
+                features: ["פינה שקטה", "בריכת בטון", "עצירה קצרה"],
+                wazeLocation: "עין מזור",
+                mapSearch: "עין מזור",
+                imageUrl: "https://images.unsplash.com/photo-1544830728-8dedf3e7fba7?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-70 ס״מ",
+                likes: 54,
+                isFeatured: false,
+                userLiked: false
+            },
+
+            // South Region
+            {
+                id: 26,
+                name: "עין עבדת",
+                region: "דרום",
+                area: "הר הנגב (שדה בוקר)",
+                description: "קניון סלע מרהיב, בריכות טבעיות, ומפל מים בלב המדבר (הרחצה אסורה).",
+                features: ["קניון מרהיב", "מפל מים", "נוף מדברי"],
+                wazeLocation: "גן לאומי עין עבדת",
+                mapSearch: "עין עבדת",
+                imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop",
+                depth: "צפייה בלבד",
+                likes: 260,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 27,
+                name: "עין עקב",
+                region: "דרום",
+                area: "הר הנגב",
+                description: "בריכה טבעית עמוקה ורחבה בלב המדבר, מים צוננים כל השנה.",
+                features: ["בריכה עמוקה", "מים צוננים", "מיטיבי לכת / ג'יפים"],
+                wazeLocation: "חניון לילה עין עקב",
+                mapSearch: "עין עקב",
+                imageUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-7.0 מטרים",
+                likes: 305,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 28,
+                name: "עין גדי (עין דוד)",
+                region: "דרום",
+                area: "מדבר יהודה / ים המלח",
+                description: "מפל מים ובריכות שכשוך בלב שמורת טבע מדברית עשירה ביעלים.",
+                features: ["מפל מים", "שמורת טבע", "יעלים ונוף"],
+                wazeLocation: "שמורת טבע עין גדי",
+                mapSearch: "עין גדי",
+                imageUrl: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=600&auto=format&fit=crop",
+                depth: "שכשוך עד 1 מטר",
+                likes: 350,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 29,
+                name: "עין בוקק",
+                region: "דרום",
+                area: "דרום ים המלח",
+                description: "מסלול מים רדודים וקל להליכה בתוך נחל מדברי יפהפה.",
+                features: ["מים רדודים", "קל להליכה", "לכל המשפחה"],
+                wazeLocation: "נחל בוקק",
+                mapSearch: "עין בוקק",
+                imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop",
+                depth: "קרסוליים - ברכיים",
+                likes: 280,
+                isFeatured: true,
+                userLiked: false
+            },
+            {
+                id: 30,
+                name: "עין פשחה (עינות צוקים)",
+                region: "דרום",
+                area: "צפון ים המלח",
+                description: "נווה מדבר נמוך בעולם עם בריכות שחייה טבעיות ואתר ארכיאולוגי.",
+                features: ["נווה מדבר", "בריכות שחייה", "אתר ארכיאולוגי"],
+                wazeLocation: "עינות צוקים",
+                mapSearch: "עינות צוקים",
+                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop",
+                depth: "כ-1.2 מטר",
+                likes: 210,
+                isFeatured: false,
+                userLiked: false
+            }
+        ];
+
+        // Articles Data
+        const articlesData = [
+            {
+                title: "כללי בטיחות לרחצה במעיינות טבעיים",
+                category: "בטיחות למטייל",
+                summary: "רחצה במעיינות וגבי מים מצריכה זהירות. כל הכללים שחשוב לדעת לפני שנכנסים למים: בדיקת עומק, הימנעות מקפיצות מראש ומניעת סכנות מחליקה.",
+                icon: "fa-shield-halved",
+                color: "text-amber-500",
+                bg: "bg-amber-50"
+            },
+            {
+                title: "איך לשמור על המעיינות והטבע בישראל?",
+                category: "איכות הסביבה",
+                summary: "ארץ ישראל התברכה במעיינות מופלאים. גלו כיצד לשמור עליהם נקיים: פינוי אשפה, הימנעות משימוש בסבונים במים וכיבוד בעלי החיים המקומיים.",
+                icon: "fa-leaf",
+                color: "text-emerald-500",
+                bg: "bg-emerald-50"
+            },
+            {
+                title: "ציוד חובה למטיילים במעיינות",
+                category: "הכנה לטיול",
+                summary: "מה כדאי לארוז בתיק הטיולים למעיין? נעלי מים נוחות, פנסים לחציית נקבות חשוכות, מים לשתייה, כיסוי נגד מים לטלפון ומגבת קלת משקל.",
+                icon: "fa-suitcase-rolling",
+                color: "text-sky-500",
+                bg: "bg-sky-50"
+            },
+            {
+                title: "העונות המומלצות לביקור במעיינות",
+                category: "עונות השנה",
+                summary: "מתי הכי כדאי לבקר במעיינות הצפון, המרכז והדרום? מדריך עונתי מלא לביקור במעיינות פועמים, גבי מדבר חורפיים ומעיינות מוצלים לקיץ.",
+                icon: "fa-sun",
+                color: "text-orange-500",
+                bg: "bg-orange-50"
+            }
+        ];
+
+        let currentRegionFilter = 'all';
+
+        // Toggle Like Function
+        function toggleLike(springId) {
+            const spring = springsData.find(s => s.id === springId);
+            if (spring) {
+                if (spring.userLiked) {
+                    spring.likes--;
+                    spring.userLiked = false;
+                } else {
+                    spring.likes++;
+                    spring.userLiked = true;
+                }
+                filterSprings();
+            }
+        }
+
+        // Render Springs to DOM
+        function renderSprings(springs) {
+            const grid = document.getElementById('springsGrid');
+            const noResults = document.getElementById('noResults');
+            grid.innerHTML = '';
+
+            if (springs.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            springs.forEach(spring => {
+                const wazeUrl = `https://waze.com/ul?q=${encodeURIComponent(spring.wazeLocation)}&navigate=yes`;
+                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spring.mapSearch)}`;
+                
+                const shareText = `שלום! ממליץ לבקר ב-${spring.name} (${spring.area}).\nלהגעה ב-Waze: ${wazeUrl}`;
+                const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+
+                const tagsHtml = spring.features.map(f => 
+                    `<span class="bg-water-50 text-water-700 text-xs px-2.5 py-1 rounded-full font-medium border border-water-100">${f}</span>`
+                ).join(' ');
+
+                const heartIconClass = spring.userLiked ? 'fa-solid text-red-500' : 'fa-regular text-slate-400';
+
+                const cardHtml = `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col card-hover">
+                        <!-- Image & Badge -->
+                        <div class="relative h-48 overflow-hidden bg-slate-100">
+                            <img src="${spring.imageUrl}" alt="${spring.name}" loading="lazy" class="w-full h-full object-cover">
+                            <span class="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-slate-700 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                <i class="fa-solid fa-location-dot text-water-600 ml-1"></i> ${spring.region}
+                            </span>
+                            ${spring.isFeatured ? '<span class="absolute top-3 left-3 bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm"><i class="fa-solid fa-star ml-1"></i>מומלץ</span>' : ''}
+                            <span class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md text-white text-xs font-medium px-2.5 py-1 rounded-lg">
+                                <i class="fa-solid fa-ruler-vertical ml-1 text-sky-300"></i> עומק: ${spring.depth}
+                            </span>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-5 flex-grow flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-1">
+                                    <div class="text-xs text-water-600 font-semibold">${spring.area}</div>
+                                    <!-- Like Button -->
+                                    <button onclick="toggleLike(${spring.id})" class="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full transition text-xs">
+                                        <i class="${heartIconClass} fa-heart text-sm"></i>
+                                        <span class="font-bold text-slate-700">${spring.likes}</span>
+                                    </button>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 mb-2">${spring.name}</h3>
+                                <p class="text-slate-600 text-sm mb-4 leading-relaxed line-clamp-3">${spring.description}</p>
+                                
+                                <div class="flex flex-wrap gap-1.5 mb-5">
+                                    ${tagsHtml}
+                                </div>
+                            </div>
+
+                            <!-- Buttons Section -->
+                            <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <!-- Waze Button -->
+                                    <a href="${wazeUrl}" target="_blank" rel="noopener noreferrer" 
+                                       class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2.5 px-3 rounded-xl text-center text-sm transition flex items-center justify-center gap-1.5 shadow-sm">
+                                        <i class="fa-brands fa-waze text-lg"></i> Waze
+                                    </a>
+
+                                    <!-- Google Maps Button -->
+                                    <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" 
+                                       class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl text-center text-sm transition flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-map-location-dot text-red-500"></i> גוגל מפס
+                                    </a>
+                                </div>
+
+                                <!-- WhatsApp Share Button -->
+                                <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" 
+                                   class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-2 px-3 rounded-xl text-center text-xs transition flex items-center justify-center gap-1.5 border border-emerald-200">
+                                    <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i> שתף ב-WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHtml;
+            });
+        }
+
+        // Render Articles to DOM
+        function renderArticles() {
+            const grid = document.getElementById('articlesGrid');
+            grid.innerHTML = '';
+
+            articlesData.forEach(article => {
+                const articleHtml = `
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-start">
+                        <div class="${article.bg} ${article.color} w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0">
+                            <i class="fa-solid ${article.icon}"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold ${article.color} uppercase tracking-wider">${article.category}</span>
+                            <h3 class="text-lg font-bold text-slate-800 mt-1 mb-2">${article.title}</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">${article.summary}</p>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += articleHtml;
+            });
+        }
+
+        // Filter Function for Search Input and Region Buttons
+        function filterSprings() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            const filtered = springsData.filter(spring => {
+                let matchesRegion = false;
+                if (currentRegionFilter === 'all') {
+                    matchesRegion = true;
+                } else if (currentRegionFilter === 'featured') {
+                    matchesRegion = spring.isFeatured || spring.likes > 150;
+                } else {
+                    matchesRegion = spring.region === currentRegionFilter;
+                }
+
+                const matchesSearch = spring.name.toLowerCase().includes(query) ||
+                                      spring.area.toLowerCase().includes(query) ||
+                                      spring.description.toLowerCase().includes(query) ||
+                                      spring.features.some(f => f.toLowerCase().includes(query));
+
+                return matchesRegion && matchesSearch;
+            });
+
+            renderSprings(filtered);
+        }
+
+        // Set Region Filter
+        function setFilter(region) {
+            currentRegionFilter = region;
+            
+            // Update active state of buttons
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-water-600', 'text-white');
+                btn.classList.add('bg-white', 'text-slate-600');
+            });
+
+            if (event && event.target) {
+                event.target.classList.remove('bg-white', 'text-slate-600');
+                event.target.classList.add('bg-water-600', 'text-white');
+            }
+
+            filterSprings();
+        }
+
+        // Switch View Tabs (Springs / Articles)
+        function switchTab(tab) {
+            const springsSec = document.getElementById('springsSection');
+            const articlesSec = document.getElementById('articlesSection');
+            const subRegionFilters = document.getElementById('subRegionFilters');
+
+            const tabSpringsBtn = document.getElementById('tabSpringsBtn');
+            const tabArticlesBtn = document.getElementById('tabArticlesBtn');
+
+            if (tab === 'springs') {
+                springsSec.classList.remove('hidden');
+                articlesSec.classList.add('hidden');
+                subRegionFilters.classList.remove('hidden');
+
+                tabSpringsBtn.className = "bg-water-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5";
+                tabArticlesBtn.className = "bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5";
+            } else {
+                springsSec.classList.add('hidden');
+                articlesSec.classList.remove('hidden');
+                subRegionFilters.classList.add('hidden');
+
+                tabArticlesBtn.className = "bg-water-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5";
+                tabSpringsBtn.className = "bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5";
+            }
+        }
+
+        // Initial Load
+        window.onload = function() {
+            renderSprings(springsData);
+            renderArticles();
+        };
+    </script>
+</body>
+</html>
