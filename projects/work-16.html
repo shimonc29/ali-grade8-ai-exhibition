@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ Studio - Neon Music Mixer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* Vinyl Spinning Animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .vinyl-spin {
+            animation: spin 2s linear infinite;
+        }
+        .vinyl-paused {
+            animation-play-state: paused;
+        }
+        /* Custom Glowing Neon Shadows */
+        .neon-glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.2);
+        }
+        .neon-glow-pink {
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.4), inset 0 0 15px rgba(236, 72, 153, 0.2);
+        }
+        .neon-text-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.7);
+        }
+        .neon-text-pink {
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.7);
+        }
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #1f2937;
+            border-radius: 9999px;
+            height: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #06b6d4;
+            cursor: pointer;
+            box-shadow: 0 0 10px #06b6d4;
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .slider-pink::-webkit-slider-thumb {
+            background: #ec4899;
+            box-shadow: 0 0 10px #ec4899;
+        }
+        /* Vertical range styling */
+        .slider-vertical {
+            writing-mode: bt-lr; /* IE */
+            -webkit-appearance: slider-vertical; /* Webkit */
+            width: 8px;
+            height: 120px;
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        /* VU Meter bar glow */
+        .vu-bar {
+            transition: height 0.05s ease-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-950 via-slate-900 to-indigo-950">
+
+    <!-- Top Header Navigation -->
+    <header class="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-r from-cyan-500 to-pink-500 p-2.5 rounded-xl shadow-lg neon-glow-cyan">
+                <i class="fa-solid fa-compact-disc text-white text-xl animate-spin"></i>
+            </div>
+            <div>
+                <h1 class="orbitron text-xl md:text-2xl font-black tracking-wider bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">
+                    DJ STUDIO <span class="text-xs px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/30 uppercase tracking-widest">Pro Mix</span>
+                </h1>
+                <p class="text-xs text-slate-400">Web Audio API Realtime Synthesizer & DJ Mixer</p>
+            </div>
+        </div>
+
+        <!-- Master Controls & BPM -->
+        <div class="flex items-center space-x-4 md:space-x-6">
+            <div class="hidden sm:flex flex-col items-center bg-slate-800/80 px-4 py-1.5 rounded-xl border border-slate-700">
+                <span class="text-[10px] text-cyan-400 orbitron uppercase tracking-wider font-semibold">Master Tempo</span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="adjustBpm(-2)" class="text-slate-400 hover:text-white px-1 text-sm"><i class="fa-solid fa-minus"></i></button>
+                    <span id="bpmDisplay" class="orbitron text-lg font-bold text-white w-12 text-center">128</span>
+                    <span class="text-xs text-slate-400">BPM</span>
+                    <button onclick="adjustBpm(2)" class="text-slate-400 hover:text-white px-1 text-sm"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+
+            <!-- Master Play / Stop All -->
+            <button id="masterPlayBtn" onclick="toggleMasterPlay()" class="flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold orbitron text-xs tracking-wider uppercase transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg neon-glow-cyan">
+                <i id="masterPlayIcon" class="fa-solid fa-play text-sm"></i>
+                <span id="masterPlayText">Start Live Mix</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main DJ Console Layout -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        
+        <!-- DECK A (Left) -->
+        <div class="lg:col-span-4 bg-slate-900/90 backdrop-blur-xl border border-cyan-500/30 rounded-3xl p-5 shadow-2xl neon-glow-cyan flex flex-col justify-between relative overflow-hidden">
+            <!-- Ambient Glow Top Right -->
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Deck Header -->
+            <div class="flex items-center justify-between mb-4 z-10">
+                <div>
+                    <span class="text-[10px] orbitron font-bold tracking-widest text-cyan-400 bg-cyan-950 px-2.5 py-1 rounded-full border border-cyan-500/40">DECK A</span>
+                    <h2 id="trackNameA" class="font-bold text-base text-slate-100 mt-1 truncate max-w-[180px]">Electro Bassline Loop</h2>
+                </div>
+                <!-- VU Meter A -->
+                <div class="flex items-end space-x-1 h-8 bg-slate-950 p-1.5 rounded-lg border border-slate-800 w-12">
+                    <div id="vuA-l" class="w-1.5 bg-cyan-500 rounded-full vu-bar" style="height: 20%;"></div>
+                    <div id="vuA-r" class="w-1.5 bg-cyan-500 rounded-full vu-bar" style="height: 20%;"></div>
+                </div>
+            </div>
+
+            <!-- Turntable Vinyl Graphic -->
+            <div class="flex flex-col items-center justify-center my-4 z-10 relative">
+                <div id="turntableA" class="w-56 h-56 md:w-64 md:h-64 rounded-full bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 border-4 border-slate-800 shadow-2xl relative flex items-center justify-center vinyl-spin vinyl-paused cursor-pointer group" onclick="toggleDeckPlay('A')">
+                    <!-- Vinyl Grooves -->
+                    <div class="absolute inset-3 rounded-full border border-slate-800/80"></div>
+                    <div class="absolute inset-8 rounded-full border border-slate-800/80"></div>
+                    <div class="absolute inset-14 rounded-full border border-slate-800/80"></div>
+                    <div class="absolute inset-20 rounded-full border border-slate-800/80"></div>
+                    
+                    <!-- Vinyl Label -->
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex flex-col items-center justify-center p-2 text-center border-2 border-cyan-400 shadow-inner">
+                        <span class="orbitron text-[9px] font-black text-white tracking-widest">DECK A</span>
+                        <span id="genreA" class="text-[8px] text-cyan-200 mt-0.5">Electro House</span>
+                        <div class="w-2 h-2 rounded-full bg-slate-950 mt-1 border border-cyan-300"></div>
+                    </div>
+
+                    <!-- Scratch Overlay / Hover hint -->
+                    <div class="absolute inset-0 rounded-full bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-xs orbitron font-bold text-cyan-300 bg-slate-950/80 px-2 py-1 rounded">CLICK TO TOGGLE</span>
+                    </div>
+                </div>
+
+                <!-- Deck Control Buttons (Play, Cue, Sync) -->
+                <div class="flex items-center space-x-3 mt-5 w-full justify-center">
+                    <button onclick="triggerCue('A')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs orbitron font-bold text-slate-300 transition-colors shadow">
+                        CUE
+                    </button>
+                    <button id="playBtnA" onclick="toggleDeckPlay('A')" class="flex-1 max-w-[120px] py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white orbitron text-xs font-black tracking-wider shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center space-x-2">
+                        <i id="playIconA" class="fa-solid fa-play"></i>
+                        <span id="playTextA">PLAY</span>
+                    </button>
+                    <button onclick="syncDeck('A')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-cyan-500/30 text-xs orbitron font-bold text-cyan-400 transition-colors shadow">
+                        SYNC
+                    </button>
+                </div>
+            </div>
+
+            <!-- Deck Sound Bank Selector & EQ/Volume -->
+            <div class="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 z-10 space-y-3">
+                <!-- Track / Loop Selector -->
+                <div>
+                    <label class="text-[10px] orbitron font-bold text-slate-400 uppercase tracking-wider block mb-1">Sound Loop Preset</label>
+                    <select id="presetA" onchange="changeDeckPreset('A', this.value)" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                        <option value="electro">⚡ Electro Club Bass</option>
+                        <option value="synthwave">🌆 Retro Synthwave</option>
+                        <option value="techno">🔥 Dark Driving Techno</option>
+                        <option value="ambient">✨ Ambient Chillpad</option>
+                    </select>
+                </div>
+
+                <!-- Volume Slider -->
+                <div>
+                    <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                        <span>Volume</span>
+                        <span id="volValA">80%</span>
+                    </div>
+                    <input type="range" id="volA" min="0" max="1" step="0.01" value="0.8" oninput="updateDeckVolume('A', this.value)" class="w-full">
+                </div>
+
+                <!-- 3-Band EQ (High, Mid, Low) -->
+                <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/60">
+                    <div>
+                        <div class="text-[10px] text-center text-slate-400 mb-1">HIGH</div>
+                        <input type="range" id="eqHighA" min="-24" max="12" step="1" value="0" oninput="updateEQ('A', 'high', this.value)" class="w-full">
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-center text-slate-400 mb-1">MID</div>
+                        <input type="range" id="eqMidA" min="-24" max="12" step="1" value="0" oninput="updateEQ('A', 'mid', this.value)" class="w-full">
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-center text-slate-400 mb-1">LOW</div>
+                        <input type="range" id="eqLowA" min="-24" max="12" step="1" value="0" oninput="updateEQ('A', 'low', this.value)" class="w-full">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER MIXER CONSOLE (Crossfader, FX, Pads) -->
+        <div class="lg:col-span-4 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-3xl p-5 shadow-2xl flex flex-col justify-between space-y-5">
+            <!-- FX & Pad Section -->
+            <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="orbitron text-xs font-bold text-purple-400 tracking-wider flex items-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>SFX & PERFORMANCE PADS</span>
+                    </h3>
+                    <span class="text-[10px] text-slate-500">Live Triggers</span>
+                </div>
+                <!-- 4 Drum / Vocal / FX Pads -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button onclick="triggerOneShot('airhorn')" class="bg-gradient-to-br from-indigo-900/50 to-purple-900/50 hover:from-indigo-800 hover:to-purple-800 border border-indigo-500/40 rounded-xl p-3 text-center transition-all active:scale-95 shadow">
+                        <span class="block orbitron text-xs font-bold text-indigo-300">AIRHORN</span>
+                        <span class="text-[9px] text-slate-400">DJ Classic</span>
+                    </button>
+                    <button onclick="triggerOneShot('laser')" class="bg-gradient-to-br from-purple-900/50 to-pink-900/50 hover:from-purple-800 hover:to-pink-800 border border-pink-500/40 rounded-xl p-3 text-center transition-all active:scale-95 shadow">
+                        <span class="block orbitron text-xs font-bold text-pink-300">LASER SWEEP</span>
+                        <span class="text-[9px] text-slate-400">Sci-Fi FX</span>
+                    </button>
+                    <button onclick="triggerOneShot('scratch')" class="bg-gradient-to-br from-cyan-900/50 to-blue-900/50 hover:from-cyan-800 hover:to-blue-800 border border-cyan-500/40 rounded-xl p-3 text-center transition-all active:scale-95 shadow">
+                        <span class="block orbitron text-xs font-bold text-cyan-300">VINYL SCRATCH</span>
+                        <span class="text-[9px] text-slate-400">Cut & Scratch</span>
+                    </button>
+                    <button onclick="triggerOneShot('drop')" class="bg-gradient-to-br from-pink-900/50 to-rose-900/50 hover:from-pink-800 hover:to-rose-800 border border-rose-500/40 rounded-xl p-3 text-center transition-all active:scale-95 shadow">
+                        <span class="block orbitron text-xs font-bold text-rose-300">SUB DROP</span>
+                        <span class="text-[9px] text-slate-400">Bass Boom</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter & FX Controls -->
+            <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="orbitron text-xs font-bold text-slate-300">MASTER FILTER & DELAY</span>
+                    <button onclick="toggleFilter()" id="filterToggleBtn" class="text-[10px] orbitron font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">BYPASSED</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Cutoff</span>
+                            <span id="filterCutoffVal">20 kHz</span>
+                        </div>
+                        <input type="range" id="filterCutoff" min="200" max="18000" step="100" value="18000" oninput="updateFilterCutoff(this.value)" class="w-full slider-pink">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Delay Mix</span>
+                            <span id="delayMixVal">0%</span>
+                        </div>
+                        <input type="range" id="delayMix" min="0" max="1" step="0.05" value="0" oninput="updateDelayMix(this.value)" class="w-full slider-pink">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CROSSFADER (Bottom of Center Console) -->
+            <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 flex flex-col items-center space-y-2">
+                <div class="flex justify-between w-full text-xs orbitron font-bold">
+                    <span class="text-cyan-400">DECK A</span>
+                    <span class="text-slate-400">CROSSFADER</span>
+                    <span class="text-pink-400">DECK B</span>
+                </div>
+                <div class="w-full px-2 py-1">
+                    <input type="range" id="crossfader" min="0" max="100" value="50" oninput="updateCrossfader(this.value)" class="w-full slider-pink h-3">
+                </div>
+                <div class="flex justify-between w-full text-[10px] text-slate-500 px-1">
+                    <span>100% A</span>
+                    <span>CENTER (50/50)</span>
+                    <span>100% B</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DECK B (Right) -->
+        <div class="lg:col-span-4 bg-slate-900/90 backdrop-blur-xl border border-pink-500/30 rounded-3xl p-5 shadow-2xl neon-glow-pink flex flex-col justify-between relative overflow-hidden">
+            <!-- Ambient Glow Top Left -->
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Deck Header -->
+            <div class="flex items-center justify-between mb-4 z-10">
+                <div>
+                    <span class="text-[10px] orbitron font-bold tracking-widest text-pink-400 bg-pink-950 px-2.5 py-1 rounded-full border border-pink-500/40">DECK B</span>
+                    <h2 id="trackNameB" class="font-bold text-base text-slate-100 mt-1 truncate max-w-[180px]">Retro Synthwave</h2>
+                </div>
+                <!-- VU Meter B -->
+                <div class="flex items-end space-x-1 h-8 bg-slate-950 p-1.5 rounded-lg border border-slate-800 w-12">
+                    <div id="vuB-l" class="w-1.5 bg-pink-500 rounded-full vu-bar" style="height: 20%;"></div>
+                    <div id="vuB-r" class="w-1.5 bg-pink-500 rounded-full vu-bar" style="height: 20%;"></div>
+                </div>
+            </div>
+
+            <!-- Turntable Vinyl Graphic -->
+            <div class="flex flex-col items-center justify-center my-4 z-10 relative">
+                <div id="turntableB" class="w-56 h-56 md:w-64 md:h-64 rounded-full bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 border-4 border-slate-800 shadow-2xl relative flex items-center justify-center vinyl-spin vinyl-paused cursor-pointer group" onclick="toggleDeckPlay('B')">
+                    <!-- Vinyl Grooves -->
+                    <div class="absolute inset-3 rounded-full border border-slate-800/80"></div>
+                    <div class="absolute inset-8 rounded-full border border-slate-800/80"></div>
+                    <div class="absolute inset-14 rounded-full border border-slate-800/80"></div>
+                    <div class="absolute inset-20 rounded-full border border-slate-800/80"></div>
+                    
+                    <!-- Vinyl Label -->
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-pink-600 to-purple-700 flex flex-col items-center justify-center p-2 text-center border-2 border-pink-400 shadow-inner">
+                        <span class="orbitron text-[9px] font-black text-white tracking-widest">DECK B</span>
+                        <span id="genreB" class="text-[8px] text-pink-200 mt-0.5">Synthwave</span>
+                        <div class="w-2 h-2 rounded-full bg-slate-950 mt-1 border border-pink-300"></div>
+                    </div>
+
+                    <!-- Scratch Overlay / Hover hint -->
+                    <div class="absolute inset-0 rounded-full bg-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-xs orbitron font-bold text-pink-300 bg-slate-950/80 px-2 py-1 rounded">CLICK TO TOGGLE</span>
+                    </div>
+                </div>
+
+                <!-- Deck Control Buttons (Play, Cue, Sync) -->
+                <div class="flex items-center space-x-3 mt-5 w-full justify-center">
+                    <button onclick="triggerCue('B')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs orbitron font-bold text-slate-300 transition-colors shadow">
+                        CUE
+                    </button>
+                    <button id="playBtnB" onclick="toggleDeckPlay('B')" class="flex-1 max-w-[120px] py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white orbitron text-xs font-black tracking-wider shadow-lg shadow-pink-500/30 transition-all flex items-center justify-center space-x-2">
+                        <i id="playIconB" class="fa-solid fa-play"></i>
+                        <span id="playTextB">PLAY</span>
+                    </button>
+                    <button onclick="syncDeck('B')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-pink-500/30 text-xs orbitron font-bold text-pink-400 transition-colors shadow">
+                        SYNC
+                    </button>
+                </div>
+            </div>
+
+            <!-- Deck Sound Bank Selector & EQ/Volume -->
+            <div class="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80 z-10 space-y-3">
+                <!-- Track / Loop Selector -->
+                <div>
+                    <label class="text-[10px] orbitron font-bold text-slate-400 uppercase tracking-wider block mb-1">Sound Loop Preset</label>
+                    <select id="presetB" onchange="changeDeckPreset('B', this.value)" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-pink-500">
+                        <option value="synthwave">🌆 Retro Synthwave</option>
+                        <option value="electro">⚡ Electro Club Bass</option>
+                        <option value="techno">🔥 Dark Driving Techno</option>
+                        <option value="ambient">✨ Ambient Chillpad</option>
+                    </select>
+                </div>
+
+                <!-- Volume Slider -->
+                <div>
+                    <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                        <span>Volume</span>
+                        <span id="volValB">80%</span>
+                    </div>
+                    <input type="range" id="volB" min="0" max="1" step="0.01" value="0.8" oninput="updateDeckVolume('B', this.value)" class="w-full slider-pink">
+                </div>
+
+                <!-- 3-Band EQ (High, Mid, Low) -->
+                <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/60">
+                    <div>
+                        <div class="text-[10px] text-center text-slate-400 mb-1">HIGH</div>
+                        <input type="range" id="eqHighB" min="-24" max="12" step="1" value="0" oninput="updateEQ('B', 'high', this.value)" class="w-full slider-pink">
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-center text-slate-400 mb-1">MID</div>
+                        <input type="range" id="eqMidB" min="-24" max="12" step="1" value="0" oninput="updateEQ('B', 'mid', this.value)" class="w-full slider-pink">
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-center text-slate-400 mb-1">LOW</div>
+                        <input type="range" id="eqLowB" min="-24" max="12" step="1" value="0" oninput="updateEQ('B', 'low', this.value)" class="w-full slider-pink">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Guide / Notice -->
+    <footer class="w-full bg-slate-950 border-t border-slate-800/80 py-3 px-4 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto rounded-t-2xl mt-4">
+        <div class="flex items-center space-x-2 mb-2 sm:mb-0">
+            <i class="fa-solid fa-headphones text-cyan-400"></i>
+            <span>Tip: Click <strong class="text-white">"Start Live Mix"</strong> first to activate audio, then press Play on Deck A or B.</span>
+        </div>
+        <div class="text-[11px] text-slate-500 orbitron">
+            DJ STUDIO V2.5 &bull; BUILT WITH WEB AUDIO API
+        </div>
+    </footer>
+
+    <!-- JavaScript Audio Engine & DJ Logic -->
+    <script>
+        // --- Web Audio Context & State ---
+        let audioCtx = null;
+        let isMasterPlaying = false;
+        let masterGainNode = null;
+        let masterFilterNode = null;
+        let masterDelayNode = null;
+        let masterDelayFeedback = null;
+
+        let bpm = 128;
+        let timerInterval = null;
+        let currentBeatStep = 0;
+
+        // Deck States
+        const decks = {
+            A: {
+                isPlaying: false,
+                preset: 'electro',
+                volume: 0.8,
+                eq: { high: 0, mid: 0, low: 0 },
+                gainNode: null,
+                eqHighNode: null,
+                eqMidNode: null,
+                eqLowNode: null,
+                filterNode: null,
+                panNode: null
+            },
+            B: {
+                isPlaying: false,
+                preset: 'synthwave',
+                volume: 0.8,
+                eq: { high: 0, mid: 0, low: 0 },
+                gainNode: null,
+                eqHighNode: null,
+                eqMidNode: null,
+                eqLowNode: null,
+                filterNode: null,
+                panNode: null
+            }
+        };
+
+        // Presets configuration
+        const presets = {
+            electro: { name: 'Electro Club Bass', genre: 'Electro House' },
+            synthwave: { name: 'Retro Synthwave', genre: 'Synthwave' },
+            techno: { name: 'Dark Driving Techno', genre: 'Techno' },
+            ambient: { name: 'Ambient Chillpad', genre: 'Ambient' }
+        };
+
+        // Initialize Audio Context on user interaction
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+
+                // Master FX chain
+                masterGainNode = audioCtx.createGain();
+                masterGainNode.gain.value = 1.0;
+
+                masterFilterNode = audioCtx.createBiquadFilter();
+                masterFilterNode.type = 'lowpass';
+                masterFilterNode.frequency.value = 18000;
+
+                masterDelayNode = audioCtx.createDelay();
+                masterDelayNode.delayTime.value = 0.375; // 3/16 delay synced roughly
+
+                const delayFeedbackNode = audioCtx.createGain();
+                delayFeedbackNode.gain.value = 0.3;
+
+                const delayMixNode = audioCtx.createGain();
+                delayMixNode.gain.value = 0.0; // Initially 0
+
+                // Connect Master Effects
+                masterGainNode.connect(masterFilterNode);
+                masterFilterNode.connect(audioCtx.destination);
+
+                // Setup individual Decks
+                setupDeckAudio('A');
+                setupDeckAudio('B');
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function setupDeckAudio(deckId) {
+            const d = decks[deckId];
+            
+            // Gain (Volume)
+            d.gainNode = audioCtx.createGain();
+            d.gainNode.gain.value = d.volume;
+
+            // Stereo Panner for crossfader simulation (-1 for A, +1 for B)
+            if (audioCtx.createStereoPanner) {
+                d.panNode = audioCtx.createStereoPanner();
+                d.panNode.pan.value = (deckId === 'A') ? -1 : 1;
+            } else {
+                d.panNode = audioCtx.createGain(); // fallback
+            }
+
+            // 3-Band EQ Nodes
+            d.eqHighNode = audioCtx.createBiquadFilter();
+            d.eqHighNode.type = 'highshelf';
+            d.eqHighNode.frequency.value = 3200;
+            d.eqHighNode.gain.value = d.eq.high;
+
+            d.eqMidNode = audioCtx.createBiquadFilter();
+            d.eqMidNode.type = 'peaking';
+            d.eqMidNode.frequency.value = 1000;
+            d.eqMidNode.gain.value = d.eq.mid;
+
+            d.eqLowNode = audioCtx.createBiquadFilter();
+            d.eqLowNode.type = 'lowshelf';
+            d.eqLowNode.frequency.value = 320;
+            d.eqLowNode.gain.value = d.eq.low;
+
+            // Chain: Source -> Low -> Mid -> High -> Gain -> Pan -> MasterGain
+            d.eqLowNode.connect(d.eqMidNode);
+            d.eqMidNode.connect(d.eqHighNode);
+            d.eqHighNode.connect(d.gainNode);
+            d.gainNode.connect(d.panNode);
+            d.panNode.connect(masterGainNode);
+        }
+
+        // --- Master Play / Stop ---
+        function toggleMasterPlay() {
+            initAudio();
+            isMasterPlaying = !isMasterPlaying;
+            const btn = document.getElementById('masterPlayBtn');
+            const icon = document.getElementById('masterPlayIcon');
+            const text = document.getElementById('masterPlayText');
+
+            if (isMasterPlaying) {
+                btn.className = "flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold orbitron text-xs tracking-wider uppercase transition-all duration-300 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white shadow-lg neon-glow-pink";
+                icon.className = "fa-solid fa-stop text-sm";
+                text.innerText = "Stop Live Mix";
+                startSequencer();
+            } else {
+                btn.className = "flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold orbitron text-xs tracking-wider uppercase transition-all duration-300 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg neon-glow-cyan";
+                icon.className = "fa-solid fa-play text-sm";
+                text.innerText = "Start Live Mix";
+                stopSequencer();
+            }
+        }
+
+        // --- Sequencer Clock & Sound Synthesizer ---
+        function startSequencer() {
+            if (timerInterval) clearInterval(timerInterval);
+            const intervalMs = (60 / bpm / 4) * 1000; // 16th note timing
+            timerInterval = setInterval(() => {
+                if (!isMasterPlaying) return;
+                
+                // Play step for active decks
+                if (decks.A.isPlaying) playStepAudio('A', currentBeatStep);
+                if (decks.B.isPlaying) playStepAudio('B', currentBeatStep);
+
+                // Animate VU meters if playing
+                updateVUMeters();
+
+                currentBeatStep = (currentBeatStep + 1) % 16;
+            }, intervalMs);
+        }
+
+        function stopSequencer() {
+            if (timerInterval) clearInterval(timerInterval);
+            currentBeatStep = 0;
+            resetVUMeters();
+        }
+
+        function adjustBpm(amount) {
+            bpm = Math.max(80, Math.min(180, bpm + amount));
+            document.getElementById('bpmDisplay').innerText = bpm;
+            if (isMasterPlaying) {
+                startSequencer(); // Restart with new interval
+            }
+        }
+
+        // --- Synthesizer Engine per Deck & Preset ---
+        function playStepAudio(deckId, step) {
+            if (!audioCtx) return;
+            const d = decks[deckId];
+            const t = audioCtx.currentTime;
+            const preset = d.preset;
+
+            // Destination for this deck sound is its EQ low node
+            const dest = d.eqLowNode;
+
+            // 16-step patterns based on preset
+            if (preset === 'electro') {
+                // Kick on 0, 4, 8, 12
+                if (step % 4 === 0) playKick(t, dest, 120, 0.25);
+                // Hi-Hat on every offbeat
+                if (step % 2 === 1) playHiHat(t, dest, 0.05);
+                // Snare on 4 and 12
+                if (step === 4 || step === 12) playSnare(t, dest, 0.2);
+                // Bass groove
+                if (step === 0 || step === 3 || step === 6 || step === 10) {
+                    playSynthNote(t, dest, step === 0 ? 55 : 110, 'sawtooth', 0.15);
+                }
+            } else if (preset === 'synthwave') {
+                // 4-on-the-floor kick with punch
+                if (step % 4 === 0) playKick(t, dest, 100, 0.3);
+                // Snare on 4 and 12 with reverb/delay feel
+                if (step === 4 || step === 12) playSnare(t, dest, 0.25);
+                // Arp synth melody
+                const arpNotes = [220, 261.63, 329.63, 392, 440, 329.63, 261.63, 220, 196, 246.94, 329.63, 392, 440, 392, 329.63, 246.94];
+                playSynthNote(t, dest, arpNotes[step], 'square', 0.12, 0.1);
+            } else if (preset === 'techno') {
+                // Driving techno kick every step 0, 2, 4...
+                if (step % 2 === 0) playKick(t, dest, 140, 0.2);
+                // Shaker/Hihat on every 16th
+                playHiHat(t, dest, 0.03, 0.5);
+                // Dark driving bass on odd steps
+                if (step % 4 === 2) playSynthNote(t, dest, 73.42, 'sawtooth', 0.18);
+            } else if (preset === 'ambient') {
+                // Soft chord pad every 8 steps
+                if (step === 0 || step === 8) {
+                    playPadChord(t, dest, step === 0 ? [130.81, 196, 261.63] : [146.83, 220, 293.66], 1.5);
+                }
+            }
+        }
+
+        // --- Web Audio Synth Instruments ---
+        function playKick(time, destination, startFreq = 120, duration = 0.3) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(startFreq, time);
+            osc.frequency.exponentialRampToValueAtTime(30, time + duration);
+
+            gain.gain.setValueAtTime(1.0, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+            osc.connect(gain);
+            gain.connect(destination);
+
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+
+        function playSnare(time, destination, duration = 0.2) {
+            // Noise buffer for snare
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 1000;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.7, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(destination);
+
+            noise.start(time);
+        }
+
+        function playHiHat(time, destination, duration = 0.05, volume = 0.3) {
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 7000;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(volume, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(destination);
+
+            noise.start(time);
+        }
+
+        function playSynthNote(time, destination, freq, type = 'sawtooth', duration = 0.15, volume = 0.2) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, time);
+
+            gain.gain.setValueAtTime(volume, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+            osc.connect(gain);
+            gain.connect(destination);
+
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+
+        function playPadChord(time, destination, frequencies, duration = 1.5) {
+            frequencies.forEach(freq => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, time);
+
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.linearRampToValueAtTime(0.15, time + 0.3);
+                gain.gain.linearRampToValueAtTime(0.001, time + duration);
+
+                osc.connect(gain);
+                gain.connect(destination);
+
+                osc.start(time);
+                osc.stop(time + duration);
+            });
+        }
+
+        // --- FX Soundboard One-Shots ---
+        function triggerOneShot(type) {
+            initAudio();
+            const t = audioCtx.currentTime;
+
+            if (type === 'airhorn') {
+                // Play dual frequency blast
+                [440, 554.37, 659.25].forEach(f => {
+                    const osc = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(f, t);
+                    g.gain.setValueAtTime(0.2, t);
+                    g.gain.linearRampToValueAtTime(0.001, t + 0.4);
+                    osc.connect(g);
+                    g.connect(masterGainNode);
+                    osc.start(t);
+                    osc.stop(t + 0.4);
+                });
+            } else if (type === 'laser') {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(1200, t);
+                osc.frequency.exponentialRampToValueAtTime(100, t + 0.4);
+                g.gain.setValueAtTime(0.3, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                osc.connect(g);
+                g.connect(masterGainNode);
+                osc.start(t);
+                osc.stop(t + 0.4);
+            } else if (type === 'scratch') {
+                playScratchEffect();
+            } else if (type === 'drop') {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, t);
+                osc.frequency.exponentialRampToValueAtTime(30, t + 0.6);
+                g.gain.setValueAtTime(0.6, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+                osc.connect(g);
+                g.connect(masterGainNode);
+                osc.start(t);
+                osc.stop(t + 0.6);
+            }
+        }
+
+        function playScratchEffect() {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            // Noise burst with pitch sweep
+            const bufferSize = audioCtx.sampleRate * 0.2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.sin(i / 10);
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(800, t);
+            filter.frequency.linearRampToValueAtTime(3000, t + 0.1);
+            filter.frequency.linearRampToValueAtTime(1000, t + 0.2);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.5, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGainNode);
+
+            noise.start(t);
+        }
+
+        // --- Deck Controls & UI ---
+        function toggleDeckPlay(deckId) {
+            initAudio();
+            const d = decks[deckId];
+            d.isPlaying = !d.isPlaying;
+
+            const btn = document.getElementById(`playBtn${deckId}`);
+            const icon = document.getElementById(`playIcon${deckId}`);
+            const text = document.getElementById(`playText${deckId}`);
+            const turntable = document.getElementById(`turntable${deckId}`);
+
+            if (d.isPlaying) {
+                btn.className = deckId === 'A' 
+                    ? "flex-1 max-w-[120px] py-2.5 rounded-xl bg-cyan-500 text-slate-950 orbitron text-xs font-black tracking-wider shadow-lg shadow-cyan-500/50 transition-all flex items-center justify-center space-x-2 ring-2 ring-white"
+                    : "flex-1 max-w-[120px] py-2.5 rounded-xl bg-pink-500 text-slate-950 orbitron text-xs font-black tracking-wider shadow-lg shadow-pink-500/50 transition-all flex items-center justify-center space-x-2 ring-2 ring-white";
+                icon.className = "fa-solid fa-pause";
+                text.innerText = "PAUSE";
+                turntable.classList.remove('vinyl-paused');
+
+                // If master isn't running yet, auto-start master mix
+                if (!isMasterPlaying) {
+                    toggleMasterPlay();
+                }
+            } else {
+                btn.className = deckId === 'A'
+                    ? "flex-1 max-w-[120px] py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white orbitron text-xs font-black tracking-wider shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center space-x-2"
+                    : "flex-1 max-w-[120px] py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white orbitron text-xs font-black tracking-wider shadow-lg shadow-pink-500/30 transition-all flex items-center justify-center space-x-2";
+                icon.className = "fa-solid fa-play";
+                text.innerText = "PLAY";
+                turntable.classList.add('vinyl-paused');
+            }
+        }
+
+        function triggerCue(deckId) {
+            initAudio();
+            playScratchEffect();
+            // Quick stutter restart
+            const d = decks[deckId];
+            if (!d.isPlaying) {
+                toggleDeckPlay(deckId);
+            }
+        }
+
+        function syncDeck(deckId) {
+            // Visual feedback sync effect
+            const btn = event.currentTarget;
+            btn.classList.add('bg-white', 'text-slate-950');
+            setTimeout(() => {
+                btn.classList.remove('bg-white', 'text-slate-950');
+            }, 300);
+        }
+
+        function changeDeckPreset(deckId, presetKey) {
+            decks[deckId].preset = presetKey;
+            const p = presets[presetKey];
+            if (deckId === 'A') {
+                document.getElementById('trackNameA').innerText = p.name;
+                document.getElementById('genreA').innerText = p.genre;
+            } else {
+                document.getElementById('trackNameB').innerText = p.name;
+                document.getElementById('genreB').innerText = p.genre;
+            }
+        }
+
+        function updateDeckVolume(deckId, val) {
+            decks[deckId].volume = parseFloat(val);
+            document.getElementById(`volVal${deckId}`).innerText = Math.round(val * 100) + '%';
+            
+            // Recalculate with crossfader if active
+            applyCrossfader();
+        }
+
+        function updateEQ(deckId, band, val) {
+            const d = decks[deckId];
+            const numVal = parseFloat(val);
+            d.eq[band] = numVal;
+            if (band === 'high' && d.eqHighNode) d.eqHighNode.gain.value = numVal;
+            if (band === 'mid' && d.eqMidNode) d.eqMidNode.gain.value = numVal;
+            if (band === 'low' && d.eqLowNode) d.eqLowNode.gain.value = numVal;
+        }
+
+        function updateCrossfader(val) {
+            // val ranges from 0 (100% A) to 100 (100% B)
+            applyCrossfader();
+        }
+
+        function applyCrossfader() {
+            if (!audioCtx) return;
+            const cfVal = parseInt(document.getElementById('crossfader').value) / 100; // 0 to 1
+
+            // Equal power crossfade curve
+            const gainA = Math.cos(cfVal * 0.5 * Math.PI) * decks.A.volume;
+            const gainB = Math.sin(cfVal * 0.5 * Math.PI) * decks.B.volume;
+
+            if (decks.A.gainNode) decks.A.gainNode.gain.value = gainA;
+            if (decks.B.gainNode) decks.B.gainNode.gain.value = gainB;
+
+            if (decks.A.panNode && decks.A.panNode.pan) {
+                decks.A.panNode.pan.value = -1 + cfVal; // pans A left to center
+                decks.B.panNode.pan.value = cfVal;      // pans B center to right
+            }
+        }
+
+        // --- Filter & Delay FX ---
+        let filterActive = false;
+        function toggleFilter() {
+            filterActive = !filterActive;
+            const btn = document.getElementById('filterToggleBtn');
+            if (filterActive) {
+                btn.className = "text-[10px] orbitron font-bold px-2 py-0.5 rounded bg-pink-500 text-white border border-pink-400";
+                btn.innerText = "ACTIVE";
+                if (masterFilterNode) masterFilterNode.frequency.value = parseInt(document.getElementById('filterCutoff').value);
+            } else {
+                btn.className = "text-[10px] orbitron font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700";
+                btn.innerText = "BYPASSED";
+                if (masterFilterNode) masterFilterNode.frequency.value = 18000;
+            }
+        }
+
+        function updateFilterCutoff(val) {
+            document.getElementById('filterCutoffVal').innerText = val >= 1000 ? (val/1000).toFixed(1) + ' kHz' : val + ' Hz';
+            if (filterActive && masterFilterNode) {
+                masterFilterNode.frequency.value = parseInt(val);
+            }
+        }
+
+        function updateDelayMix(val) {
+            document.getElementById('delayMixVal').innerText = Math.round(val * 100) + '%';
+            // FX delay mix simulation
+        }
+
+        // --- VU Meters Animation ---
+        function updateVUMeters() {
+            if (decks.A.isPlaying) {
+                const heightA = Math.floor(Math.random() * 70) + 20;
+                document.getElementById('vuA-l').style.height = heightA + '%';
+                document.getElementById('vuA-r').style.height = (heightA - 10) + '%';
+            } else {
+                document.getElementById('vuA-l').style.height = '15%';
+                document.getElementById('vuA-r').style.height = '15%';
+            }
+
+            if (decks.B.isPlaying) {
+                const heightB = Math.floor(Math.random() * 70) + 20;
+                document.getElementById('vuB-l').style.height = heightB + '%';
+                document.getElementById('vuB-r').style.height = (heightB - 10) + '%';
+            } else {
+                document.getElementById('vuB-l').style.height = '15%';
+                document.getElementById('vuB-r').style.height = '15%';
+            }
+        }
+
+        function resetVUMeters() {
+            document.getElementById('vuA-l').style.height = '15%';
+            document.getElementById('vuA-r').style.height = '15%';
+            document.getElementById('vuB-l').style.height = '15%';
+            document.getElementById('vuB-r').style.height = '15%';
+        }
+    </script>
+</body>
+</html>
+</html>
