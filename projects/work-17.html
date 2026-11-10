@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לומדים שפות | ספרדית וערבית</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Rubik', 'sans-serif'],
+          },
+          colors: {
+            duoGreen: '#58cc02',
+            duoGreenDark: '#46a302',
+            duoBlue: '#1cb0f6',
+            duoBlueDark: '#1899d6',
+            duoYellow: '#ffc800',
+            duoPurple: '#ce82ff',
+            duoPurpleDark: '#a559d9',
+            duoRed: '#ff4b4b',
+            duoRedDark: '#ea2b2b',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Rubik', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #f7f9fa;
+    }
+    .btn-3d {
+      transition: all 0.1s ease;
+      box-shadow: 0 4px 0 var(--tw-shadow-color);
+    }
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 var(--tw-shadow-color);
+    }
+    .btn-3d:disabled {
+      transform: none;
+      box-shadow: 0 4px 0 #cccccc;
+      background-color: #e5e5e5;
+      color: #afafaf;
+      cursor: not-allowed;
+    }
+    @keyframes bounce-subtle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-bounce-subtle {
+      animation: bounce-subtle 2s infinite ease-in-out;
+    }
+    @keyframes pop-in {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in {
+      animation: pop-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+  </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col justify-between bg-slate-50 overflow-x-hidden">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-30 bg-white border-b-2 border-gray-200 px-4 py-3 shadow-sm">
+    <div class="max-w-2xl mx-auto flex items-center justify-between gap-2">
+      
+      <!-- Back / Home Button -->
+      <button id="header-back-btn" onclick="app.confirmExitLesson()" class="hidden text-gray-400 hover:text-gray-600 transition p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- App Logo / Language Badge -->
+      <div id="header-logo" class="flex items-center gap-2">
+        <span class="text-2xl font-black text-duoGreen tracking-wider">Aprender</span>
+        <div id="language-switcher" class="flex bg-gray-100 p-1 rounded-full border border-gray-200">
+          <button id="lang-btn-es" onclick="app.switchLanguage('es')" class="px-2.5 py-0.5 rounded-full text-xs font-bold transition bg-white shadow-sm text-duoGreenDark">ספרדית</button>
+          <button id="lang-btn-ar" onclick="app.switchLanguage('ar')" class="px-2.5 py-0.5 rounded-full text-xs font-bold transition text-gray-500 hover:text-gray-800">ערבית</button>
+          <button id="lang-btn-ar_alphabet" onclick="app.switchLanguage('ar_alphabet')" class="px-2.5 py-0.5 rounded-full text-xs font-bold transition text-gray-500 hover:text-gray-800">אותיות ערבית</button>
+        </div>
+      </div>
+
+      <!-- Lesson Progress Bar -->
+      <div id="header-progress-container" class="hidden flex-1 mx-4">
+        <div class="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
+          <div id="header-progress-bar" class="bg-duoGreen h-full w-0 transition-all duration-300 ease-out rounded-full"></div>
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="flex items-center gap-3 font-bold text-sm sm:text-base">
+        <div class="flex items-center gap-1 text-amber-500" title="רצף ימים">
+          <span class="text-xl animate-bounce-subtle">🔥</span>
+          <span id="stat-streak">12</span>
+        </div>
+        <div class="flex items-center gap-1 text-duoYellow" title="נקודות ניסיון">
+          <span class="text-xl">⭐</span>
+          <span id="stat-xp">450</span>
+        </div>
+        <div class="flex items-center gap-1 text-duoRed" title="חיים">
+          <span class="text-xl animate-pulse">❤️</span>
+          <span id="stat-hearts">5</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main id="app-container" class="flex-1 max-w-2xl w-full mx-auto p-4 flex flex-col justify-between">
+  </main>
+
+  <!-- BOTTOM FEEDBACK BANNER -->
+  <div id="feedback-banner" class="fixed bottom-0 left-0 right-0 z-40 transform translate-y-full transition-transform duration-300 ease-in-out border-t-2 shadow-2xl">
+    <div class="max-w-2xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-4 w-full sm:w-auto">
+        <div id="feedback-icon" class="w-12 h-12 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0">
+          ✓
+        </div>
+        <div class="flex flex-col">
+          <span id="feedback-title" class="font-black text-lg">כל הכבוד!</span>
+          <span id="feedback-subtitle" class="text-sm font-medium opacity-90"></span>
+        </div>
+      </div>
+      <button id="feedback-btn" onclick="app.nextQuestion()" class="btn-3d w-full sm:w-auto px-8 py-3 rounded-2xl text-white font-bold tracking-wide text-lg">
+        המשך
+      </button>
+    </div>
+  </div>
+
+  <!-- EXIT CONFIRMATION MODAL -->
+  <div id="modal-exit" class="fixed inset-0 z-50 bg-black/50 hidden backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl animate-pop-in border-4 border-gray-100">
+      <div class="text-5xl mb-3">🥺</div>
+      <h3 class="text-2xl font-black text-gray-800 mb-2">תרצה לעזוב?</h3>
+      <p class="text-gray-500 mb-6 font-medium">ההתקדמות שלך בשיעור זה לא תישמר!</p>
+      <div class="flex flex-col gap-3">
+        <button onclick="app.cancelExitLesson()" class="btn-3d bg-duoBlue hover:bg-duoBlueDark shadow-duoBlueDark text-white py-3 rounded-2xl font-bold text-lg">
+          המשך בשיעור
+        </button>
+        <button onclick="app.exitLesson()" class="btn-3d bg-gray-200 hover:bg-gray-300 shadow-gray-400 text-gray-600 py-3 rounded-2xl font-bold text-lg">
+          צא מכל מקרה
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUT OF HEARTS MODAL -->
+  <div id="modal-no-hearts" class="fixed inset-0 z-50 bg-black/50 hidden backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl animate-pop-in border-4 border-red-100">
+      <div class="text-6xl mb-3">💔</div>
+      <h3 class="text-2xl font-black text-gray-800 mb-2">נגמרו לכם החיים!</h3>
+      <p class="text-gray-500 mb-6 font-medium">אזלו הלבבות שלך. הנה 5 לבבות נוספים כדי להמשיך בלמידה!</p>
+      <div class="flex flex-col gap-3">
+        <button onclick="app.refillHeartsAndContinue()" class="btn-3d bg-duoGreen hover:bg-duoGreenDark shadow-duoGreenDark text-white py-3 rounded-2xl font-bold text-lg">
+          מלא לבבות ❤️ (+5)
+        </button>
+        <button onclick="app.exitLesson()" class="btn-3d bg-gray-200 hover:bg-gray-300 shadow-gray-400 text-gray-600 py-3 rounded-2xl font-bold text-lg">
+          חזור למפה
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFETTI CANVAS -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+  <script>
+    /* AUDIO SYNTHESIS & SOUND FX */
+    const AudioFX = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      },
+      playPop() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(850, this.ctx.currentTime + 0.06);
+          gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.06);
+        } catch(e){}
+      },
+      playCorrect() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.15, now + idx * 0.07);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.22);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.07);
+            osc.stop(now + idx * 0.07 + 0.22);
+          });
+        } catch(e){}
+      },
+      playWrong() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          [240, 190].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.15, now + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.25);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.25);
+          });
+        } catch(e){}
+      },
+      playWin() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.18, now + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.35);
+          });
+        } catch(e){}
+      }
+    };
+
+    let cachedVoices = [];
+    function loadVoices() {
+      if ('speechSynthesis' in window) {
+        cachedVoices = window.speechSynthesis.getVoices();
+      }
+    }
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    function speakText(text, lang) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      const cleanText = text.replace(/\(.*\)/g, '').trim();
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      const isArabic = (lang === 'ar' || lang === 'ar_alphabet');
+      
+      utterance.lang = isArabic ? 'ar-SA' : 'es-ES';
+      utterance.rate = isArabic ? 0.75 : 0.85;
+      utterance.volume = 1.0;
+
+      if (cachedVoices.length > 0) {
+        const targetLangPrefix = isArabic ? 'ar' : 'es';
+        const matchingVoice = cachedVoices.find(v => v.lang.toLowerCase().startsWith(targetLangPrefix));
+        if (matchingVoice) utterance.voice = matchingVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* CURRICULUM DATA */
+    const CURRICULUM = {
+      es: {
+        name: 'ספרדית',
+        levels: Array.from({ length: 10 }, (_, i) => ({
+          id: i + 1,
+          title: [
+            'ברכות והיכרות', 'אוכל ומסעדות', 'משפחה', 'מספרים וזמן', 
+            'צבעים ותיאורים', 'פעולות יומיומיות', 'ניווט בעיר', 'בית וציוד', 
+            'מזג אוויר ותחביבים', 'שיחה מתקדמת'
+          ][i],
+          subtitle: `שלב ${i + 1} - למידה ותרגול אינטראקטיבי`,
+          icon: ['👋', '🌮', '🏠', '🔢', '🎨', '🏃', '🗺️', '🛋️', '☀️', '💬'][i],
+          questions: [
+            {
+              type: 'wordBank',
+              prompt: 'תרגמו את המשפט הבא:',
+              targetText: i === 0 ? '¡Hola! ¿Cómo estás?' : (i === 1 ? 'Quiero un café, por favor.' : `Lección ${i + 1} en español`),
+              audio: i === 0 ? '¡Hola! ¿Cómo estás?' : (i === 1 ? 'Quiero un café, por favor.' : `Lección ${i + 1}`),
+              avatar: '🦉',
+              correctAnswer: i === 0 ? ['שלום!', 'מה', 'שלומך?'] : ['אני', 'רוצה', 'קפה,', 'בבקשה.'],
+              wordOptions: i === 0 ? ['שלום!', 'תודה', 'מה', 'שלומך?', 'בוקר', 'טוב'] : ['אני', 'רוצה', 'קפה,', 'בבקשה.', 'מים', 'אוכל']
+            },
+            {
+              type: 'multipleChoice',
+              prompt: `בחרו את התרגום הנכון:`,
+              targetText: i === 0 ? 'Buenos días' : 'Gracias',
+              audio: i === 0 ? 'Buenos días' : 'Gracias',
+              avatar: '👨‍🏫',
+              correctIndex: 0,
+              options: i === 0 ? ['בוקר טוב', 'לילה טוב', 'להתראות', 'מה נשמע?'] : ['תודה', 'בבקשה', 'שלום', 'סליחה']
+            }
+          ]
+        }))
+      },
+      ar: {
+        name: 'ערבית - מילים',
+        levels: Array.from({ length: 10 }, (_, i) => ({
+          id: i + 1,
+          title: [
+            'ברכות ושלום', 'אירוח ואוכל', 'משפחה וקרובים', 'מספרים בערבית', 
+            'זמן וימים', 'בית וסביבה', 'שאלות נפוצות', 'עבודה ולימודים', 
+            'טבע ומזג אוויר', 'שיחה קולחת'
+          ][i],
+          subtitle: `שלב ${i + 1} - מילים ומשפטים בערבית`,
+          icon: ['🕌', '☕', '👨‍👩‍👧', '🔢', '📅', '🏡', '❓', '💼', '🌴', '🗣️'][i],
+          questions: [
+            {
+              type: 'wordBank',
+              prompt: 'תרגמו את המשפט הבא:',
+              targetText: i === 0 ? 'أَهْلاً وَسَهْلاً (אהלן וסהלן)' : 'قَهْوَة وَمَاء (קהווה ו-מאא)',
+              audio: i === 0 ? 'أهلاً وسهلاً' : 'قهوة وماء',
+              avatar: '🦉',
+              correctAnswer: i === 0 ? ['ברוכים', 'הבאים!'] : ['קפה', 'ומים.'],
+              wordOptions: i === 0 ? ['ברוכים', 'הבאים!', 'שלום', 'תודה', 'בוקר'] : ['קפה', 'ומים.', 'לחם', 'סוכר', 'תודה']
+            },
+            {
+              type: 'multipleChoice',
+              prompt: 'איך אומרים "תודה" בערבית?',
+              targetText: 'شُكْراً',
+              audio: 'شكراً',
+              avatar: '🙏',
+              correctIndex: 2,
+              options: ['أهلاً', 'نَعَم', 'شُكْراً', 'لا']
+            }
+          ]
+        }))
+      },
+      ar_alphabet: {
+        name: 'אותיות בערבית',
+        levels: [
+          {
+            id: 1, title: 'האות אליף (أ)', subtitle: 'למידת האות הראשונה והגייתה', icon: '🅰️',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות אליף (أ):',
+                letter: 'أ',
+                nameHebrew: 'אֵלִיף (Alif)',
+                soundPhonetic: 'נהגית כ-אַ / אָ',
+                forms: { isolated: 'أ', initial: 'أـ', medial: 'ـأـ', final: 'ـأ' },
+                exampleWord: 'أَسَد (אסד)',
+                exampleMeaning: 'אריה 🦁',
+                audio: 'أ'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות מביניהן היא האות אליף?',
+                targetText: 'أ - الألف',
+                audio: 'أ',
+                avatar: '🔤',
+                correctIndex: 0,
+                options: ['أ (אליף)', 'ب (בא)', 'ت (תא)', 'ث (ת׳א)']
+              }
+            ]
+          },
+          {
+            id: 2, title: 'האות בא (ب)', subtitle: 'אות עם נקודה אחת למטה', icon: '🅱️',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות בא (ب):',
+                letter: 'ب',
+                nameHebrew: 'בָּא (Ba)',
+                soundPhonetic: 'נהגית כ-בּ\' (B)',
+                forms: { isolated: 'ب', initial: 'بـ', medial: 'ـبـ', final: 'ـب' },
+                exampleWord: 'بَيْت (בֵּית)',
+                exampleMeaning: 'בית 🏠',
+                audio: 'ب'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'מהי האות בָּא (נקודה אחת למטה)?',
+                targetText: 'ب',
+                audio: 'ب',
+                avatar: '🔤',
+                correctIndex: 1,
+                options: ['أ', 'ب', 'ت', 'ث']
+              }
+            ]
+          },
+          {
+            id: 3, title: 'האות תא (ت)', subtitle: 'אות עם שתי נקודות למעלה', icon: '📝',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות תא (ت):',
+                letter: 'ت',
+                nameHebrew: 'תָּא (Ta)',
+                soundPhonetic: 'נהגית כ-תּ\' (T)',
+                forms: { isolated: 'ت', initial: 'تـ', medial: 'ـتـ', final: 'ـت' },
+                exampleWord: 'تُفَّاح (תֻפַּאח)',
+                exampleMeaning: 'תפוח 🍎',
+                audio: 'ت'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות היא האות תא (שתי נקודות למעלה)?',
+                targetText: 'ت',
+                audio: 'ت',
+                avatar: '🔤',
+                correctIndex: 2,
+                options: ['أ', 'ب', 'ت', 'ث']
+              }
+            ]
+          },
+          {
+            id: 4, title: 'האות ת׳א (ث)', subtitle: 'אות עם שלוש נקודות למעלה', icon: '✏️',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות ת׳א (ث):',
+                letter: 'ث',
+                nameHebrew: 'תָ׳א (Tha)',
+                soundPhonetic: 'נהגית כ-TH (כמו ב-Think)',
+                forms: { isolated: 'ث', initial: 'ثـ', medial: 'ـثـ', final: 'ـث' },
+                exampleWord: 'ثَعْلَب (תַעְלַב)',
+                exampleMeaning: 'שועל 🦊',
+                audio: 'ث'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות מבין האפשרויות היא ת׳א (שלוש נקודות)?',
+                targetText: 'ث',
+                audio: 'ث',
+                avatar: '🔤',
+                correctIndex: 3,
+                options: ['أ', 'ب', 'ت', 'ث']
+              }
+            ]
+          },
+          {
+            id: 5, title: 'האות ג׳ים (ج)', subtitle: 'אות עם נקודה אחת בתוך הבטן', icon: '🐪',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות ג׳ים (ج):',
+                letter: 'ج',
+                nameHebrew: 'גִ׳ים (Jim)',
+                soundPhonetic: 'נהגית כ-ג׳ (J)',
+                forms: { isolated: 'ج', initial: 'جـ', medial: 'ـجـ', final: 'ـج' },
+                exampleWord: 'جَمَل (גַ\'מַל)',
+                exampleMeaning: 'גמל 🐪',
+                audio: 'ج'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות מיוצגת כאות ג׳ים?',
+                targetText: 'ج',
+                audio: 'ج',
+                avatar: '🔤',
+                correctIndex: 0,
+                options: ['ج', 'ح', 'خ', 'د']
+              }
+            ]
+          },
+          {
+            id: 6, title: 'האות חא (ح)', subtitle: 'אות ג׳ים ללא נקודה בכלל', icon: '🌊',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות חא (ح):',
+                letter: 'ح',
+                nameHebrew: 'חָא (Ha)',
+                soundPhonetic: 'נהגית כ-ח\' גרונית עמוקה',
+                forms: { isolated: 'ح', initial: 'حـ', medial: 'ـحـ', final: 'ـح' },
+                exampleWord: 'حِصَان (חִצאן)',
+                exampleMeaning: 'סוס 🐎',
+                audio: 'ح'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות היא חא (ללא נקודות)?',
+                targetText: 'ح',
+                audio: 'ح',
+                avatar: '🔤',
+                correctIndex: 1,
+                options: ['ج', 'ح', 'خ', 'د']
+              }
+            ]
+          },
+          {
+            id: 7, title: 'האות ח׳א (خ)', subtitle: 'אות עם נקודה אחת מעל הראש', icon: '🍞',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות ח׳א (خ):',
+                letter: 'خ',
+                nameHebrew: 'חָ׳א (Kha)',
+                soundPhonetic: 'נהגית כ-כ\' רפה / ח\' קשה',
+                forms: { isolated: 'خ', initial: 'خـ', medial: 'ـخـ', final: 'ـخ' },
+                exampleWord: 'خُبْز (חֻבְז)',
+                exampleMeaning: 'לחם 🍞',
+                audio: 'خ'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות היא ח׳א (נקודה מעל הראש)?',
+                targetText: 'خ',
+                audio: 'خ',
+                avatar: '🔤',
+                correctIndex: 2,
+                options: ['ج', 'ح', 'خ', 'د']
+              }
+            ]
+          },
+          {
+            id: 8, title: 'האות דאל (د)', subtitle: 'אות פשוטה בצורת זווית', icon: '🚪',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות דאל (د):',
+                letter: 'د',
+                nameHebrew: 'דָאל (Dal)',
+                soundPhonetic: 'נהגית כ-ד\' (D)',
+                forms: { isolated: 'د', initial: 'د', medial: 'ـد', final: 'ـد' },
+                exampleWord: 'دَار (דאר)',
+                exampleMeaning: 'בית / דירה 🚪',
+                audio: 'د'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'מהי האות דאל (ללא נקודה)?',
+                targetText: 'د',
+                audio: 'د',
+                avatar: '🔤',
+                correctIndex: 0,
+                options: ['د', 'ذ', 'ر', 'ز']
+              }
+            ]
+          },
+          {
+            id: 9, title: 'האות ד׳אל (ذ)', subtitle: 'אות דאל עם נקודה למעלה', icon: '🐺',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות ד׳אל (ذ):',
+                letter: 'ذ',
+                nameHebrew: 'דָ׳אל (Dhal)',
+                soundPhonetic: 'נהגית כ-TH קולית (כמו ב-This)',
+                forms: { isolated: 'ذ', initial: 'ذ', medial: 'ـذ', final: 'ـذ' },
+                exampleWord: 'ذِئْب (דִאְב)',
+                exampleMeaning: 'זאב 🐺',
+                audio: 'ذ'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות היא ד׳אל (עם נקודה למעלה)?',
+                targetText: 'ذ',
+                audio: 'ذ',
+                avatar: '🔤',
+                correctIndex: 1,
+                options: ['د', 'ذ', 'ر', 'ز']
+              }
+            ]
+          },
+          {
+            id: 10, title: 'האות רא (ر) והאות זאי (ز)', subtitle: 'תרגול אותיות הצינור והתנועה', icon: '🌙',
+            questions: [
+              {
+                type: 'letterCard',
+                prompt: 'למדו את האות רא (ر):',
+                letter: 'ر',
+                nameHebrew: 'רָא (Ra)',
+                soundPhonetic: 'נהגית כ-ר\' מתגלגלת (R)',
+                forms: { isolated: 'ر', initial: 'ر', medial: 'ـر', final: 'ـر' },
+                exampleWord: 'رَأْس (ראס)',
+                exampleMeaning: 'ראש 👤',
+                audio: 'ر'
+              },
+              {
+                type: 'multipleChoice',
+                prompt: 'איזו אות מיוצגת כאן כ-רא (R)?',
+                targetText: 'ر',
+                audio: 'ر',
+                avatar: '🔤',
+                correctIndex: 2,
+                options: ['د', 'ذ', 'ر', 'ز']
+              }
+            ]
+          }
+        ]
+      }
+    };
+
+    /* APP STATE & CORE LOGIC */
+    const app = {
+      currentLang: 'es',
+      streak: 12,
+      xp: 450,
+      hearts: 5,
+      completedLevels: { es: [1], ar: [1], ar_alphabet: [1] },
+
+      activeLesson: null,
+      currentQuestionIdx: 0,
+      selectedWordSlots: [],
+      selectedOptionsIdx: null,
+
+      init() {
+        this.renderStats();
+        this.renderMap();
+      },
+
+      switchLanguage(langKey) {
+        AudioFX.playPop();
+        this.currentLang = langKey;
+
+        ['es', 'ar', 'ar_alphabet'].forEach(key => {
+          const btn = document.getElementById(`lang-btn-${key}`);
+          if (key === langKey) {
+            btn.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold transition bg-white shadow-sm text-duoGreenDark';
+          } else {
+            btn.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold transition text-gray-500 hover:text-gray-800';
+          }
+        });
+
+        this.renderMap();
+      },
+
+      renderStats() {
+        document.getElementById('stat-streak').innerText = this.streak;
+        document.getElementById('stat-xp').innerText = this.xp;
+        document.getElementById('stat-hearts').innerText = this.hearts;
+      },
+
+      renderMap() {
+        const container = document.getElementById('app-container');
+        document.getElementById('header-back-btn').classList.add('hidden');
+        document.getElementById('header-progress-container').classList.add('hidden');
+        document.getElementById('header-logo').classList.remove('hidden');
+
+        const curData = CURRICULUM[this.currentLang];
+        const unlockedList = this.completedLevels[this.currentLang] || [1];
+
+        let html = `
+          <div class="flex flex-col items-center py-6 w-full animate-pop-in">
+            <div class="w-full bg-gradient-to-r from-duoGreen to-emerald-500 text-white rounded-3xl p-6 mb-8 text-center shadow-lg border-b-4 border-duoGreenDark">
+              <h2 class="text-3xl font-black mb-1">${curData.name}</h2>
+              <p class="font-medium text-white/90">בחרו שלב והתחילו ללמוד!</p>
+            </div>
+            <div class="flex flex-col items-center gap-6 w-full max-w-md">
+        `;
+
+        curData.levels.forEach((lvl, idx) => {
+          const isCompleted = unlockedList.includes(lvl.id);
+          const isUnlocked = isCompleted || unlockedList.includes(lvl.id - 1) || lvl.id === 1;
+
+          let btnColorClass = 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed shadow-gray-300';
+          if (isCompleted) {
+            btnColorClass = 'bg-duoYellow hover:bg-amber-400 border-amber-600 shadow-amber-600 text-white cursor-pointer';
+          } else if (isUnlocked) {
+            btnColorClass = 'bg-duoGreen hover:bg-duoGreenDark border-emerald-700 shadow-emerald-700 text-white cursor-pointer';
+          }
+
+          const offsetClass = (idx % 2 === 1) ? 'translate-x-6' : (idx % 4 === 2 ? '-translate-x-6' : '');
+
+          html += `
+            <div class="flex flex-col items-center ${offsetClass} transition-transform">
+              <button 
+                onclick="${isUnlocked ? `app.startLesson(${lvl.id})` : ''}" 
+                class="w-24 h-24 rounded-full border-b-8 flex flex-col items-center justify-center font-black text-3xl shadow-lg transition-transform active:scale-95 ${btnColorClass}">
+                <span>${lvl.icon}</span>
+                <span class="text-xs font-bold mt-1">${isCompleted ? '✓' : lvl.id}</span>
+              </button>
+              <div class="text-center mt-2">
+                <span class="font-bold text-sm text-gray-700">${lvl.title}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+
+        container.innerHTML = html;
+      },
+
+      startLesson(levelId) {
+        AudioFX.playPop();
+        if (this.hearts <= 0) {
+          document.getElementById('modal-no-hearts').classList.remove('hidden');
+          return;
+        }
+
+        const levels = CURRICULUM[this.currentLang].levels;
+        this.activeLesson = levels.find(l => l.id === levelId);
+        this.currentQuestionIdx = 0;
+
+        document.getElementById('header-back-btn').classList.remove('hidden');
+        document.getElementById('header-progress-container').classList.remove('hidden');
+        document.getElementById('header-logo').classList.add('hidden');
+
+        this.renderQuestion();
+      },
+
+      updateProgressBar() {
+        if (!this.activeLesson) return;
+        const total = this.activeLesson.questions.length;
+        const progress = (this.currentQuestionIdx / total) * 100;
+        document.getElementById('header-progress-bar').style.width = `${progress}%`;
+      },
+
+      renderQuestion() {
+        this.updateProgressBar();
+        this.hideFeedbackBanner();
+        this.selectedWordSlots = [];
+        this.selectedOptionsIdx = null;
+
+        const container = document.getElementById('app-container');
+        const q = this.activeLesson.questions[this.currentQuestionIdx];
+
+        if (q.audio) {
+          speakText(q.audio, this.currentLang);
+        }
+
+        if (q.type === 'wordBank') {
+          container.innerHTML = this.getWordBankHTML(q);
+        } else if (q.type === 'multipleChoice') {
+          container.innerHTML = this.getMultipleChoiceHTML(q);
+        } else if (q.type === 'letterCard') {
+          container.innerHTML = this.getLetterCardHTML(q);
+        }
+      },
+
+      getLetterCardHTML(q) {
+        return `
+          <div class="flex flex-col justify-between h-full py-4 animate-pop-in">
+            <div class="text-right">
+              <h2 class="text-2xl font-black text-gray-800 mb-2">${q.prompt}</h2>
+            </div>
+            
+            <div class="bg-white rounded-3xl p-6 border-2 border-gray-200 shadow-md text-center my-auto">
+              <div class="text-7xl font-black text-duoGreen mb-2 leading-tight">${q.letter}</div>
+              <h3 class="text-2xl font-bold text-gray-800">${q.nameHebrew}</h3>
+              <p class="text-sm font-semibold text-gray-500 mb-6">${q.soundPhonetic}</p>
+
+              <button onclick="speakText('${q.letter}', '${app.currentLang}')" class="btn-3d bg-duoBlue hover:bg-duoBlueDark shadow-duoBlueDark text-white px-6 py-2 rounded-2xl font-bold inline-flex items-center gap-2 mb-6">
+                <span>🔊</span> השמע קול האות
+              </button>
+
+              <div class="border-t border-gray-100 pt-4 mb-4">
+                <span class="text-xs font-bold text-gray-400 block mb-2">צורות האות במילה:</span>
+                <div class="grid grid-cols-4 gap-2 text-center dir-rtl">
+                  <div class="bg-slate-50 p-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 block">בנפרד</span><span class="text-xl font-bold text-duoBlue">${q.forms.isolated}</span></div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 block">בתחילה</span><span class="text-xl font-bold text-duoBlue">${q.forms.initial}</span></div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 block">באמצע</span><span class="text-xl font-bold text-duoBlue">${q.forms.medial}</span></div>
+                  <div class="bg-slate-50 p-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 block">בסוף</span><span class="text-xl font-bold text-duoBlue">${q.forms.final}</span></div>
+                </div>
+              </div>
+
+              <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-200 flex items-center justify-between">
+                <div class="text-right">
+                  <span class="text-xs font-bold text-emerald-600 block">מילת דוגמה:</span>
+                  <span class="text-xl font-black text-emerald-800">${q.exampleWord}</span>
+                  <span class="text-sm font-medium text-emerald-600 block">${q.exampleMeaning}</span>
+                </div>
+                <button onclick="speakText('${q.exampleWord}', '${app.currentLang}')" class="bg-white p-3 rounded-xl shadow border border-emerald-200 text-emerald-600 hover:bg-emerald-100">
+                  🔊
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <button onclick="app.checkAnswer()" class="btn-3d bg-duoGreen hover:bg-duoGreenDark shadow-duoGreenDark text-white w-full py-4 rounded-2xl font-black text-xl tracking-wide">
+                הבנתי, המשך!
+              </button>
+            </div>
+          </div>
+        `;
+      },
+
+      getWordBankHTML(q) {
+        return `
+          <div class="flex flex-col justify-between h-full py-4 animate-pop-in">
+            <div>
+              <h2 class="text-2xl font-black text-gray-800 mb-6">${q.prompt}</h2>
+              <div class="flex items-center gap-4 mb-6">
+                <span class="text-5xl">${q.avatar || '🦉'}</span>
+                <div class="relative bg-white border-2 border-gray-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                  <button onclick="speakText('${q.audio}', '${app.currentLang}')" class="text-duoBlue hover:text-duoBlueDark transition text-2xl p-1">
+                    🔊
+                  </button>
+                  <span class="text-xl font-bold text-gray-800">${q.targetText}</span>
+                </div>
+              </div>
+
+              <div id="word-slots-container" class="min-h-[64px] border-b-2 border-t-2 border-gray-200 py-3 flex flex-wrap gap-2 items-center mb-8">
+              </div>
+            </div>
+
+            <div>
+              <div id="word-bank-container" class="flex flex-wrap gap-2 justify-center mb-6">
+                ${q.wordOptions.map((word, idx) => `
+                  <button id="word-opt-${idx}" onclick="app.selectWord('${word.replace(/'/g, "\\'")}', ${idx})" class="btn-3d bg-white hover:bg-gray-50 border-2 border-gray-200 shadow-gray-300 text-gray-700 px-4 py-3 rounded-2xl font-bold text-lg">
+                    ${word}
+                  </button>
+                `).join('')}
+              </div>
+
+              <button id="check-answer-btn" disabled onclick="app.checkAnswer()" class="btn-3d bg-duoGreen hover:bg-duoGreenDark shadow-duoGreenDark text-white w-full py-4 rounded-2xl font-black text-xl tracking-wide">
+                בדיקה
+              </button>
+            </div>
+          </div>
+        `;
+      },
+
+      getMultipleChoiceHTML(q) {
+        return `
+          <div class="flex flex-col justify-between h-full py-4 animate-pop-in">
+            <div>
+              <h2 class="text-2xl font-black text-gray-800 mb-6">${q.prompt}</h2>
+              <div class="flex items-center gap-4 mb-8">
+                <span class="text-5xl">${q.avatar || '👨‍🏫'}</span>
+                <div class="bg-white border-2 border-gray-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                  <button onclick="speakText('${q.audio}', '${app.currentLang}')" class="text-duoBlue hover:text-duoBlueDark transition text-2xl p-1">
+                    🔊
+                  </button>
+                  <span class="text-2xl font-black text-gray-800">${q.targetText}</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-3">
+                ${q.options.map((opt, idx) => `
+                  <button id="mc-opt-${idx}" onclick="app.selectOption(${idx})" class="btn-3d bg-white border-2 border-gray-200 shadow-gray-200 text-gray-700 p-4 rounded-2xl font-bold text-lg text-right flex items-center justify-between hover:bg-slate-50 transition">
+                    <span>${opt}</span>
+                    <span class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-400">${idx + 1}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <button id="check-answer-btn" disabled onclick="app.checkAnswer()" class="btn-3d bg-duoGreen hover:bg-duoGreenDark shadow-duoGreenDark text-white w-full py-4 rounded-2xl font-black text-xl tracking-wide">
+                בדיקה
+              </button>
+            </div>
+          </div>
+        `;
+      },
+
+      selectWord(word, optIdx) {
+        AudioFX.playPop();
+        const q = this.activeLesson.questions[this.currentQuestionIdx];
+        this.selectedWordSlots.push({ word, optIdx });
+
+        const optBtn = document.getElementById(`word-opt-${optIdx}`);
+        if (optBtn) optBtn.classList.add('opacity-0', 'pointer-events-none');
+
+        this.renderWordSlots();
+      },
+
+      deselectWord(slotIdx) {
+        AudioFX.playPop();
+        const removed = this.selectedWordSlots.splice(slotIdx, 1)[0];
+        if (removed) {
+          const optBtn = document.getElementById(`word-opt-${removed.optIdx}`);
+          if (optBtn) optBtn.classList.remove('opacity-0', 'pointer-events-none');
+        }
+        this.renderWordSlots();
+      },
+
+      renderWordSlots() {
+        const container = document.getElementById('word-slots-container');
+        if (!container) return;
+
+        container.innerHTML = this.selectedWordSlots.map((item, idx) => `
+          <button onclick="app.deselectWord(${idx})" class="btn-3d bg-white border-2 border-duoBlue shadow-duoBlueDark text-duoBlue px-4 py-2 rounded-2xl font-bold text-lg">
+            ${item.word}
+          </button>
+        `).join('');
+
+        const checkBtn = document.getElementById('check-answer-btn');
+        if (checkBtn) {
+          checkBtn.disabled = this.selectedWordSlots.length === 0;
+        }
+      },
+
+      selectOption(idx) {
+        AudioFX.playPop();
+        const q = this.activeLesson.questions[this.currentQuestionIdx];
+        this.selectedOptionsIdx = idx;
+
+        q.options.forEach((_, i) => {
+          const btn = document.getElementById(`mc-opt-${i}`);
+          if (i === idx) {
+            btn.className = 'btn-3d bg-blue-50 border-2 border-duoBlue shadow-duoBlueDark text-duoBlue p-4 rounded-2xl font-bold text-lg text-right flex items-center justify-between';
+          } else {
+            btn.className = 'btn-3d bg-white border-2 border-gray-200 shadow-gray-200 text-gray-700 p-4 rounded-2xl font-bold text-lg text-right flex items-center justify-between hover:bg-slate-50';
+          }
+        });
+
+        const checkBtn = document.getElementById('check-answer-btn');
+        if (checkBtn) checkBtn.disabled = false;
+      },
+
+      checkAnswer() {
+        const q = this.activeLesson.questions[this.currentQuestionIdx];
+        let isCorrect = false;
+        let correctAnswerText = '';
+
+        if (q.type === 'letterCard') {
+          isCorrect = true;
+        } else if (q.type === 'wordBank') {
+          const userWords = this.selectedWordSlots.map(s => s.word);
+          isCorrect = JSON.stringify(userWords) === JSON.stringify(q.correctAnswer);
+          correctAnswerText = q.correctAnswer.join(' ');
+        } else if (q.type === 'multipleChoice') {
+          isCorrect = this.selectedOptionsIdx === q.correctIndex;
+          correctAnswerText = q.options[q.correctIndex];
+        }
+
+        if (isCorrect) {
+          AudioFX.playCorrect();
+          this.showFeedbackBanner(true, 'כל הכבוד! תשובה נכונה.', '');
+        } else {
+          AudioFX.playWrong();
+          this.hearts = Math.max(0, this.hearts - 1);
+          this.renderStats();
+          this.showFeedbackBanner(false, 'תשובה לא נכונה...', `תשובה נכונה: ${correctAnswerText}`);
+
+          if (this.hearts <= 0) {
+            setTimeout(() => {
+              document.getElementById('modal-no-hearts').classList.remove('hidden');
+            }, 600);
+          }
+        }
+      },
+
+      showFeedbackBanner(isCorrect, title, subtitle) {
+        const banner = document.getElementById('feedback-banner');
+        const icon = document.getElementById('feedback-icon');
+        const titleEl = document.getElementById('feedback-title');
+        const subTitleEl = document.getElementById('feedback-subtitle');
+        const btn = document.getElementById('feedback-btn');
+
+        titleEl.innerText = title;
+        subTitleEl.innerText = subtitle;
+
+        if (isCorrect) {
+          banner.className = 'fixed bottom-0 left-0 right-0 z-40 transform translate-y-0 transition-transform duration-300 ease-in-out border-t-2 bg-emerald-100 border-emerald-300 text-emerald-900 shadow-2xl';
+          icon.className = 'w-12 h-12 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0 bg-duoGreen shadow-emerald-600';
+          icon.innerText = '✓';
+          btn.className = 'btn-3d bg-duoGreen hover:bg-duoGreenDark shadow-duoGreenDark text-white w-full sm:w-auto px-8 py-3 rounded-2xl font-bold text-lg';
+        } else {
+          banner.className = 'fixed bottom-0 left-0 right-0 z-40 transform translate-y-0 transition-transform duration-300 ease-in-out border-t-2 bg-red-100 border-red-300 text-red-900 shadow-2xl';
+          icon.className = 'w-12 h-12 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0 bg-duoRed shadow-red-600';
+          icon.innerText = '✕';
+          btn.className = 'btn-3d bg-duoRed hover:bg-duoRedDark shadow-duoRedDark text-white w-full sm:w-auto px-8 py-3 rounded-2xl font-bold text-lg';
+        }
+      },
+
+      hideFeedbackBanner() {
+        const banner = document.getElementById('feedback-banner');
+        banner.classList.add('translate-y-full');
+      },
+
+      nextQuestion() {
+        AudioFX.playPop();
+        this.currentQuestionIdx++;
+
+        if (this.currentQuestionIdx >= this.activeLesson.questions.length) {
+          this.finishLesson();
+        } else {
+          this.renderQuestion();
+        }
+      },
+
+      finishLesson() {
+        AudioFX.playWin();
+        this.xp += 20;
+        
+        if (!this.completedLevels[this.currentLang].includes(this.activeLesson.id)) {
+          this.completedLevels[this.currentLang].push(this.activeLesson.id);
+        }
+        this.renderStats();
+        this.triggerConfetti();
+
+        const container = document.getElementById('app-container');
+        document.getElementById('header-progress-bar').style.width = '100%';
+
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-full py-12 text-center animate-pop-in">
+            <div class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h2 class="text-3xl font-black text-gray-800 mb-2">שיעור הושלם!</h2>
+            <p class="text-gray-500 font-medium mb-8">כל הכבוד! עשית צעד ענק בלמידה היום.</p>
+
+            <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+              <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-center">
+                <span class="text-xs font-bold text-amber-600 block">XP שנצבר</span>
+                <span class="text-2xl font-black text-amber-700">+20 ⭐</span>
+              </div>
+              <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4 text-center">
+                <span class="text-xs font-bold text-emerald-600 block">רצף ימים</span>
+                <span class="text-2xl font-black text-emerald-700">12 🔥</span>
+              </div>
+            </div>
+
+            <button onclick="app.exitLesson()" class="btn-3d bg-duoGreen hover:bg-duoGreenDark shadow-duoGreenDark text-white w-full max-w-xs py-4 rounded-2xl font-black text-xl tracking-wide">
+              המשך למפה
+            </button>
+          </div>
+        `;
+      },
+
+      confirmExitLesson() {
+        AudioFX.playPop();
+        document.getElementById('modal-exit').classList.remove('hidden');
+      },
+
+      cancelExitLesson() {
+        AudioFX.playPop();
+        document.getElementById('modal-exit').classList.add('hidden');
+      },
+
+      exitLesson() {
+        AudioFX.playPop();
+        document.getElementById('modal-exit').classList.add('hidden');
+        document.getElementById('modal-no-hearts').classList.add('hidden');
+        this.hideFeedbackBanner();
+        this.activeLesson = null;
+        this.renderMap();
+      },
+
+      refillHeartsAndContinue() {
+        AudioFX.playPop();
+        this.hearts = 5;
+        this.renderStats();
+        document.getElementById('modal-no-hearts').classList.add('hidden');
+      },
+
+      triggerConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = Array.from({ length: 80 }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          color: ['#58cc02', '#1cb0f6', '#ffc800', '#ce82ff', '#ff4b4b'][Math.floor(Math.random() * 5)],
+          size: Math.random() * 10 + 5,
+          speedY: Math.random() * 5 + 3,
+          speedX: Math.random() * 2 - 1,
+        }));
+
+        let frames = 0;
+        function animate() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          particles.forEach(p => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          frames++;
+          if (frames < 120) {
+            requestAnimationFrame(animate);
+          } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+        animate();
+      }
+    };
+
+    window.onload = () => app.init();
+  </script>
+</body>
+</html>
