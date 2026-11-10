@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EA SPORTS FC - Career Mode Manager</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for EA FC Style Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        eafc: {
+                            green: '#38ff70',
+                            neon: '#ccff00',
+                            dark: '#0a0d14',
+                            card: '#121824',
+                            glass: 'rgba(18, 24, 36, 0.85)',
+                            border: '#202b3d',
+                            accent: '#00f0ff',
+                            gold: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        teko: ['Teko', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #05070a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(56, 255, 112, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.05) 0%, transparent 40%);
+        }
+
+        .glass-panel {
+            background: rgba(18, 24, 36, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-panel-glow {
+            background: rgba(18, 24, 36, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(56, 255, 112, 0.3);
+            box-shadow: 0 0 25px rgba(56, 255, 112, 0.12);
+        }
+
+        .soccer-pitch {
+            background: linear-gradient(to bottom, #112817, #0a1b0e);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            position: relative;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255, 255, 255, 0.03) 40px, rgba(255, 255, 255, 0.03) 80px);
+        }
+
+        .pitch-line-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+        }
+
+        .pitch-line-center {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0d14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #202b3d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38ff70;
+        }
+
+        .tab-active {
+            color: #38ff70;
+            border-bottom: 3px solid #38ff70;
+            background: linear-gradient(to top, rgba(56, 255, 112, 0.15), transparent);
+        }
+
+        .player-card {
+            transition: all 0.2s ease;
+        }
+        .player-card:hover {
+            transform: translateY(-2px);
+            border-color: #38ff70;
+        }
+
+        .nego-office {
+            background: linear-gradient(135deg, #0d131f 0%, #172133 100%);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        /* Positional suitability glows */
+        .pos-perfect {
+            border: 2px solid #38ff70 !important;
+            box-shadow: 0 0 15px rgba(56, 255, 112, 0.6);
+        }
+        .pos-secondary {
+            border: 2px solid #f59e0b !important;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+        }
+        .pos-wrong {
+            border: 2px solid #ef4444 !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between select-none">
+
+    <!-- SOUND EFFECTS ENGINE -->
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playClick() {
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(850, this.ctx.currentTime + 0.04);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.04);
+            }
+
+            playWhistle() {
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(2600, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(2900, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.35);
+            }
+
+            playGoal() {
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.6);
+            }
+        }
+        const sfx = new SoundFX();
+    </script>
+
+    <!-- HEADER / TOP NAV -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-gray-800 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="bg-gradient-to-tr from-eafc-green to-eafc-accent text-black font-teko text-2xl font-bold px-3 py-1 rounded flex items-center shadow-lg">
+                    EA FC <span class="text-xs bg-black text-white px-1.5 py-0.5 rounded mr-1">26</span>
+                </div>
+                <div>
+                    <h1 class="text-xs text-gray-400 font-semibold tracking-widest uppercase">מצב קריירת מאמן</h1>
+                    <p id="header-club-name" class="text-sm font-bold text-eafc-green">בחר קבוצה להתחלה</p>
+                </div>
+            </div>
+
+            <div id="top-stats-bar" class="hidden md:flex items-center space-x-5 space-x-reverse text-xs">
+                <div class="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-coins text-yellow-400"></i>
+                    <div>
+                        <span class="text-gray-400 block text-[10px]">תקציב העברות</span>
+                        <span id="header-budget" class="font-bold text-white">€0M</span>
+                    </div>
+                </div>
+                <div class="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-eafc-green"></i>
+                    <div>
+                        <span class="text-gray-400 block text-[10px]">ביטחון הנהלה</span>
+                        <span id="header-board-rating" class="font-bold text-eafc-green">88%</span>
+                    </div>
+                </div>
+                <div class="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-gray-800 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar text-eafc-accent"></i>
+                    <div>
+                        <span class="text-gray-400 block text-[10px]">מחזור נוכחי</span>
+                        <span id="header-season-week" class="font-bold text-white">מחזור 1</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div id="manager-badge" class="text-right hidden sm:block">
+                    <p id="header-manager-name" class="text-sm font-bold text-white">מאמן ראשי</p>
+                    <p id="header-manager-country" class="text-[10px] text-gray-400">🇮🇱 ישראל</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-eafc-green to-blue-600 flex items-center justify-center font-bold text-black border-2 border-eafc-green shadow-md">
+                    <i class="fa-solid fa-user-tie text-lg"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- INCOMING TRANSFER OFFERS MODAL -->
+    <div id="incoming-offer-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 hidden">
+        <div class="max-w-md w-full glass-panel-glow rounded-2xl p-6 space-y-4 border border-eafc-accent shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                <h3 class="font-bold text-eafc-accent text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-envelope-open-text"></i> הצעת רכש נכנסת!
+                </h3>
+                <span class="text-xs text-gray-400">חלון העברות</span>
+            </div>
+            <div class="text-xs space-y-2 text-gray-200">
+                <p>המועדון <strong id="incoming-buyer-name" class="text-yellow-400"></strong> הגיש הצעת רכש רשמית עבור השחקן שלך:</p>
+                <div class="bg-slate-900 p-3 rounded-xl border border-gray-800 flex justify-between items-center">
+                    <div>
+                        <p id="incoming-player-name" class="font-bold text-white text-sm">קיליאן אמבפה</p>
+                        <p id="incoming-player-info" class="text-[10px] text-gray-400">ST | OVR: 91</p>
+                    </div>
+                    <div class="text-left">
+                        <span class="text-xs text-gray-400 block">סכום מוצע:</span>
+                        <span id="incoming-offer-fee" class="text-base font-bold text-eafc-green">€150M</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="acceptIncomingOffer()" class="flex-1 bg-eafc-green text-black font-bold py-2.5 rounded-xl text-xs hover:brightness-110 transition">
+                    קבל הצעה ומכור
+                </button>
+                <button onclick="rejectIncomingOffer()" class="flex-1 bg-red-600/80 hover:bg-red-600 text-white font-bold py-2.5 rounded-xl text-xs transition">
+                    דחה הצעה
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl w-full mx-auto p-4 flex-grow">
+
+        <!-- SETUP SCREEN -->
+        <section id="setup-screen" class="max-w-4xl mx-auto my-6 glass-panel p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-800">
+            <div class="text-center mb-8">
+                <h2 class="font-teko text-5xl font-bold uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-eafc-green via-white to-eafc-accent">
+                    יצירת פרופיל קריירה
+                </h2>
+                <p class="text-gray-400 text-sm">התחל את המסע שלך לצמרת הכדורגל העולמי</p>
+            </div>
+
+            <form id="setup-form" onsubmit="event.preventDefault(); startCareer();" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2">שם המאמן</label>
+                        <input type="text" id="input-manager-name" required value="פפ גווארדיולה" 
+                            class="w-full bg-slate-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-eafc-green transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2">לאום / מדינה</label>
+                        <select id="input-manager-country" class="w-full bg-slate-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-eafc-green transition">
+                            <option value="🇮🇱 ישראל">🇮🇱 ישראל</option>
+                            <option value="🇧🇷 ברזיל">🇧🇷 ברזיל</option>
+                            <option value="🇪🇸 ספרד">🇪🇸 ספרד</option>
+                            <option value="🏴󠁧󠁢󠁥󠁮󠁧󠁿 אנגליה">🏴󠁧󠁢󠁥󠁮󠁧󠁿 אנגליה</option>
+                            <option value="🇩🇪 גרמניה">🇩🇪 גרמניה</option>
+                            <option value="🇦🇷 ארגנטינה">🇦🇷 ארגנטינה</option>
+                            <option value="🇫🇷 צרפת">🇫🇷 צרפת</option>
+                            <option value="🇮🇹 איטליה">🇮🇹 איטליה</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 uppercase mb-3">בחר מועדון אימון</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="club-selection-list"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2">סגנון טקטי</label>
+                        <select id="input-tactical-style" class="w-full bg-slate-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-eafc-green transition">
+                            <option value="Tiki-Taka">טיקי-טאקה (שליטה בכדור)</option>
+                            <option value="Gegenpress">גגנפרסינג (לחץ גבוה)</option>
+                            <option value="Counter-Attack">מתפרצות קטלניות</option>
+                            <option value="Park the Bus">הגנה מבוצרת</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2">מערך בסיסי</label>
+                        <select id="input-formation" class="w-full bg-slate-900 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-eafc-green transition">
+                            <option value="4-3-3">4-3-3</option>
+                            <option value="4-2-3-1">4-2-3-1</option>
+                            <option value="4-4-2">4-4-2</option>
+                            <option value="3-5-2">3-5-2</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" 
+                    class="w-full bg-gradient-to-r from-eafc-green to-emerald-500 text-black font-bold py-4 rounded-xl shadow-lg hover:brightness-110 transition duration-300 text-lg uppercase tracking-wider flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> התחל קריירה חדשה
+                </button>
+            </form>
+        </section>
+
+        <!-- CAREER HUB -->
+        <div id="career-hub" class="hidden space-y-6">
+            <nav class="flex border-b border-gray-800 space-x-2 space-x-reverse overflow-x-auto pb-1">
+                <button onclick="switchTab('tab-overview')" id="nav-tab-overview" class="tab-active px-5 py-3 font-bold text-sm rounded-t-lg transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie"></i> מרכז בקרה
+                </button>
+                <button onclick="switchTab('tab-squad')" id="nav-tab-squad" class="text-gray-400 hover:text-white px-5 py-3 font-bold text-sm rounded-t-lg transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-users"></i> הרכב, ספסל וטקטיקה
+                </button>
+                <button onclick="switchTab('tab-transfers')" id="nav-tab-transfers" class="text-gray-400 hover:text-white px-5 py-3 font-bold text-sm rounded-t-lg transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-right-left"></i> שוק העברות (חלון העברות)
+                </button>
+                <button onclick="switchTab('tab-standings')" id="nav-tab-standings" class="text-gray-400 hover:text-white px-5 py-3 font-bold text-sm rounded-t-lg transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-trophy"></i> טבלה וסטטיסטיקה
+                </button>
+            </nav>
+
+            <!-- TAB 1: OVERVIEW -->
+            <div id="tab-overview" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- NEXT MATCH CARD -->
+                    <div class="glass-panel-glow rounded-2xl p-6 relative overflow-hidden">
+                        <div class="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+                            <span class="text-xs font-bold uppercase text-eafc-green tracking-widest flex items-center gap-2">
+                                <i class="fa-regular fa-calendar-check"></i> משחק קרוב
+                            </span>
+                            <span id="next-match-competition" class="text-xs text-gray-400">ליגה ראשונה - מחזור 1</span>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-around gap-6 my-4">
+                            <div class="text-center flex flex-col items-center">
+                                <div id="next-home-logo" class="w-20 h-20 rounded-2xl bg-slate-900 border-2 border-eafc-green flex items-center justify-center text-2xl font-bold text-eafc-green shadow-xl">FC</div>
+                                <h3 id="next-home-name" class="font-bold text-lg mt-2 text-white">מועדון הבית</h3>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-4xl font-teko font-bold text-gray-500 tracking-widest">VS</span>
+                                <div class="text-xs text-gray-400 mt-1">אצטדיון ראשי</div>
+                            </div>
+                            <div class="text-center flex flex-col items-center">
+                                <div id="next-away-logo" class="w-20 h-20 rounded-2xl bg-slate-900 border-2 border-gray-700 flex items-center justify-center text-2xl font-bold text-gray-300 shadow-xl">OPP</div>
+                                <h3 id="next-away-name" class="font-bold text-lg mt-2 text-white">יריבה</h3>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3 mt-6">
+                            <button onclick="playMatchSimulator()" class="flex-1 bg-gradient-to-r from-eafc-green to-emerald-400 text-black font-bold py-3.5 px-4 rounded-xl shadow-lg hover:brightness-110 transition flex items-center justify-center gap-2 text-sm uppercase">
+                                <i class="fa-solid fa-play"></i> שחק משחק בשידור חי
+                            </button>
+                            <button onclick="quickSimulateMatch()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-4 rounded-xl border border-gray-700 transition flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-solid fa-bolt text-yellow-400"></i> סימולציה מהירה
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NEWS FEED -->
+                    <div class="glass-panel rounded-xl p-5 space-y-3">
+                        <h4 class="text-xs font-bold uppercase text-eafc-accent flex items-center gap-2">
+                            <i class="fa-solid fa-newspaper"></i> כותרות וחדשות כדורגל
+                        </h4>
+                        <div id="news-feed" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- SIDEBAR INFO -->
+                <div class="space-y-6">
+                    <div class="glass-panel p-5 rounded-2xl space-y-4">
+                        <h4 class="text-xs font-bold uppercase text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-star text-yellow-400"></i> כוכבי הקבוצה הפעילים
+                        </h4>
+                        <div id="top-stars-list" class="space-y-2"></div>
+                    </div>
+
+                    <!-- JOB & NATIONAL TEAM OFFERS -->
+                    <div class="glass-panel p-5 rounded-2xl space-y-3 border border-yellow-500/20">
+                        <h4 class="text-xs font-bold uppercase text-yellow-400 flex items-center gap-2">
+                            <i class="fa-solid fa-briefcase"></i> הצעות אימון חדשות
+                        </h4>
+                        <div id="job-offers-container" class="space-y-2 text-xs">
+                            <p class="text-gray-400 italic">אין הצעות אימון פתוחות כרגע. המשך להשיג תוצאות טובות בליגה ובצ'מפיונס!</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-2xl space-y-3">
+                        <h4 class="text-xs font-bold uppercase text-gray-300 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders"></i> היעדים של ההנהלה
+                        </h4>
+                        <ul class="text-xs space-y-2 text-gray-300">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-eafc-green"></i> הגעה לטופ 3 בליגה</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-eafc-green"></i> שמירה על רווחיות בחלון העברות</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-eafc-green"></i> פיתוח שחקנים צעירים</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: SQUAD & TACTICS -->
+            <div id="tab-squad" class="hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 glass-panel p-4 rounded-2xl">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">מערך משחק:</label>
+                            <select id="squad-formation-select" onchange="changeFormation(this.value)" class="bg-slate-900 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs font-bold">
+                                <option value="4-3-3">4-3-3</option>
+                                <option value="4-2-3-1">4-2-3-1</option>
+                                <option value="4-4-2">4-4-2</option>
+                                <option value="3-5-2">3-5-2</option>
+                            </select>
+                        </div>
+                        <button onclick="autoSortSquadByPosition()" class="bg-eafc-accent/20 text-eafc-accent border border-eafc-accent/40 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-eafc-accent/30 transition flex items-center gap-1">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> סידור עמדות אוטומטי
+                        </button>
+                    </div>
+                    <div id="swap-status-hint" class="text-xs text-yellow-400 font-bold bg-yellow-400/10 px-3 py-1.5 rounded-lg border border-yellow-400/20">
+                        💡 לחץ על שחקן בהרכב, ואז לחץ על שחקן בספסל כדי לבצע חילוף!
+                    </div>
+                </div>
+
+                <!-- POSITION COLOR LEGEND -->
+                <div class="flex items-center justify-center gap-6 text-[11px] bg-slate-900/60 p-2.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-eafc-green border border-white"></span>
+                        <span class="text-gray-300">עמדה טבעית (ירוק)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-amber-500 border border-white"></span>
+                        <span class="text-gray-300">עמדה משנית (כתום)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-red-500 border border-white"></span>
+                        <span class="text-gray-300">עמדה לא מתאימה (אדום)</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- SOCCER PITCH FIELD -->
+                    <div class="lg:col-span-7 glass-panel p-4 rounded-2xl space-y-3">
+                        <div class="flex justify-between items-center px-2">
+                            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                                <i class="fa-solid fa-futbol text-eafc-green"></i> הרכב פותח (11 שחקנים)
+                            </h3>
+                            <div class="flex gap-2">
+                                <span id="squad-count-badge" class="hidden">0</span>
+                                <span id="starting-avg-rating" class="text-xs font-bold text-eafc-green bg-eafc-green/10 px-2 py-1 rounded">דירוג: 0</span>
+                            </div>
+                        </div>
+
+                        <div class="soccer-pitch w-full h-[480px] rounded-xl relative overflow-hidden" id="pitch-container">
+                            <div class="pitch-line-circle"></div>
+                            <div class="pitch-line-center"></div>
+                            <div id="pitch-players-layer" class="w-full h-full relative z-10 p-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- BENCH & SQUAD LIST -->
+                    <div class="lg:col-span-5 glass-panel p-4 rounded-2xl space-y-4 flex flex-col h-[540px]">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                            <i class="fa-solid fa-couch text-eafc-accent"></i> ספסל וסגל מורחב
+                        </h3>
+                        <div class="overflow-y-auto flex-1 space-y-2 pr-1" id="squad-bench-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TRANSFERS MARKET -->
+            <div id="tab-transfers" class="hidden space-y-6">
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-800 pb-4">
+                        <div>
+                            <h3 class="font-bold text-base text-white flex items-center gap-2">
+                                <i class="fa-solid fa-cart-shopping text-eafc-green"></i> שוק העברות שחקנים
+                            </h3>
+                            <p class="text-xs text-gray-400">חפש שחקנים מקבוצות אחרות ונהל משא ומתן על חתימתם</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <input type="text" id="transfer-search-input" onkeyup="renderTransfersTab()" placeholder="חפש לפי שם שחקן..." class="bg-slate-900 border border-gray-700 text-white rounded-lg px-3 py-1.5 text-xs w-full md:w-64 focus:outline-none focus:border-eafc-green">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="transfers-market-list"></div>
+                </div>
+            </div>
+
+            <!-- TAB 4: LEAGUE STANDINGS & CHAMPIONS LEAGUE -->
+            <div id="tab-standings" class="hidden space-y-6">
+                <!-- LEAGUE TABLE -->
+                <div class="glass-panel p-5 rounded-2xl">
+                    <h3 class="font-bold text-sm text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-yellow-400"></i> טבלת הליגה
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead>
+                                <tr class="text-gray-400 border-b border-gray-800">
+                                    <th class="py-3 px-2">מיקום</th>
+                                    <th class="py-3 px-2">מועדון</th>
+                                    <th class="py-3 px-2 text-center">משחקים</th>
+                                    <th class="py-3 px-2 text-center">נצחונות</th>
+                                    <th class="py-3 px-2 text-center">תיקו</th>
+                                    <th class="py-3 px-2 text-center">הפסדים</th>
+                                    <th class="py-3 px-2 text-center font-bold text-white">נקודות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="league-table-body" class="divide-y divide-gray-800/50"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CHAMPIONS LEAGUE KNOCKOUT TRACKER -->
+                <div class="glass-panel p-5 rounded-2xl border border-eafc-accent/30">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                            <i class="fa-solid fa-star text-eafc-accent"></i> ליגת האלופות (שלב הנוקאאוט)
+                        </h3>
+                        <span id="ucl-stage-badge" class="text-xs font-bold text-eafc-accent bg-eafc-accent/10 px-2.5 py-1 rounded-full border border-eafc-accent/20">רבע גמר</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs" id="ucl-bracket-grid">
+                        <div class="bg-slate-900/80 p-3 rounded-xl border border-gray-800">
+                            <span class="text-gray-400 block text-[10px] mb-1">רבע גמר</span>
+                            <div id="ucl-qf-match" class="font-bold text-white">טוען משחקים...</div>
+                        </div>
+                        <div class="bg-slate-900/80 p-3 rounded-xl border border-gray-800">
+                            <span class="text-gray-400 block text-[10px] mb-1">חצי גמר</span>
+                            <div id="ucl-sf-match" class="font-bold text-gray-500">ממתין לעולה לרבע גמר</div>
+                        </div>
+                        <div class="bg-slate-900/80 p-3 rounded-xl border border-yellow-500/30">
+                            <span class="text-yellow-400 block text-[10px] mb-1">גמר ליגת האלופות</span>
+                            <div id="ucl-final-match" class="font-bold text-gray-500">ממתין לפינאליסטיות</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- TROPHY CELEBRATION MODAL -->
+    <div id="trophy-modal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 hidden">
+        <div class="max-w-md w-full glass-panel-glow rounded-3xl p-8 text-center space-y-6 border-2 border-yellow-400 shadow-2xl animate-bounce">
+            <div class="w-24 h-24 bg-yellow-400/20 text-yellow-400 border-2 border-yellow-400 rounded-full flex items-center justify-center text-5xl mx-auto shadow-2xl">
+                🏆
+            </div>
+            <div>
+                <h2 class="text-3xl font-teko font-bold text-yellow-400 uppercase tracking-wider">אלופי ליגת האלופות!</h2>
+                <p id="trophy-team-name" class="text-white text-lg font-bold mt-1">מנצ'סטר סיטי</p>
+                <p class="text-gray-300 text-xs mt-2">ברכות למאמן! הובלת את המועדון לפסגת הכדורגל האירופי והנפת את הגביע המוזהב!</p>
+            </div>
+            <button onclick="closeTrophyModal()" class="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-bold py-3.5 rounded-xl text-sm shadow-xl hover:brightness-110 transition">
+                המשך לחגוג ולעונה הבאה
+            </button>
+        </div>
+    </div>
+
+    <!-- NEGOTIATION ROOM MODAL (VISUAL CINEMATIC INTERFACE) -->
+    <div id="transfer-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 hidden">
+        <div class="max-w-3xl w-full glass-panel rounded-2xl overflow-hidden border border-eafc-accent shadow-2xl flex flex-col">
+            <!-- HEADER -->
+            <div class="bg-slate-900 px-6 py-4 border-b border-gray-800 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-handshake text-eafc-accent text-lg"></i>
+                    <h3 class="font-bold text-white text-base">חדר דיונים ומשא ומתן</h3>
+                </div>
+                <span id="nego-patience-badge" class="text-xs font-bold px-3 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                    מד סבלנות: 6/6 ניסיונות
+                </span>
+            </div>
+
+            <!-- VISUAL OFFICE STAGE -->
+            <div class="nego-office p-6 relative flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-gray-800">
+                <!-- USER MANAGER -->
+                <div class="flex flex-col items-center text-center space-y-2">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-eafc-green to-teal-500 p-1 shadow-xl">
+                        <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-3xl text-eafc-green">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p id="nego-user-name" class="font-bold text-sm text-white">פפ גווארדיולה</p>
+                        <p class="text-[10px] text-eafc-green uppercase">מנהל מקצועי</p>
+                    </div>
+                </div>
+
+                <div class="text-center font-teko text-3xl font-bold text-gray-600">
+                    VS
+                </div>
+
+                <!-- OPPONENT REPRESENTATIVE -->
+                <div class="flex flex-col items-center text-center space-y-2">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 p-1 shadow-xl">
+                        <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-3xl text-purple-400">
+                            <i class="fa-solid fa-user-ninja"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <p id="nego-opp-club" class="font-bold text-sm text-white">נציג המועדון</p>
+                        <p class="text-[10px] text-purple-400 uppercase">נציג מורשה</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIALOGUE / NEGOTIATION CONTENT -->
+            <div class="p-6 space-y-5">
+                <div id="nego-dialogue-box" class="bg-slate-900/90 p-4 rounded-xl border border-gray-800 text-xs leading-relaxed text-gray-200">
+                    טוען פרטי משא ומתן...
+                </div>
+
+                <div id="nego-controls" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">הצעת דמי העברה במיליוני אירו (€M):</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="offer-fee-input" class="flex-1 bg-slate-900 border border-gray-700 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-eafc-green">
+                            <button onclick="submitTransferOffer()" class="bg-eafc-green text-black font-bold px-6 py-3 rounded-xl text-xs hover:brightness-110 transition flex items-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> שלח הצעה
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="closeTransferModal()" class="bg-slate-800 text-gray-400 font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-slate-700 transition">
+                        בטל וצא מחדר הדיונים
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME ENGINE CODE -->
+    <script>
+        let gameState = {
+            manager: { name: "", country: "", clubId: "", tacticalStyle: "", formation: "4-3-3" },
+            userClub: null,
+            clubs: [],
+            players: [],
+            scheduleWeek: 1,
+            standings: [],
+            news: [],
+            selectedTransferPlayer: null,
+            negoPatience: 6,
+            selectedPitchPlayerIndex: null,
+            jobOffers: [],
+            incomingOffer: null,
+            uclStage: "Quarter",
+            uclOpponents: { qf: "באיירן מינכן", sf: "ריאל מדריד", final: "פריז סן ז'רמן" }
+        };
+
+        const CLUBS_DATABASE = [
+            { id: "MCI", name: "מנצ'סטר סיטי", rating: 89, budget: 180 },
+            { id: "RMA", name: "ריאל מדריד", rating: 90, budget: 190 },
+            { id: "PSG", name: "פריז סן ז'רמן", rating: 87, budget: 160 },
+            { id: "FCB", name: "ברצלונה", rating: 86, budget: 95 },
+            { id: "ARS", name: "ארסנל", rating: 85, budget: 110 },
+            { id: "BAY", name: "באיירן מינכן", rating: 88, budget: 140 }
+        ];
+
+        const PLAYERS_DATABASE = [
+            // MANCHESTER CITY
+            { id: 101, name: "אדרסון", clubId: "MCI", pos: "GK", ovr: 88, val: 55 },
+            { id: 102, name: "קייל ווקר", clubId: "MCI", pos: "RB", ovr: 84, val: 25 },
+            { id: 103, name: "רובן דיאש", clubId: "MCI", pos: "CB", ovr: 89, val: 85 },
+            { id: 104, name: "יושקו גבארדיול", clubId: "MCI", pos: "CB", ovr: 85, val: 75 },
+            { id: 105, name: "נאתו אקה", clubId: "MCI", pos: "LB", ovr: 82, val: 35 },
+            { id: 106, name: "רודרי", clubId: "MCI", pos: "CDM", ovr: 91, val: 120 },
+            { id: 107, name: "קארן דה ברוינה", clubId: "MCI", pos: "CM", ovr: 91, val: 90 },
+            { id: 108, name: "ברנרדו סילבה", clubId: "MCI", pos: "CAM", ovr: 88, val: 80 },
+            { id: 109, name: "פיל פודן", clubId: "MCI", pos: "RW", ovr: 89, val: 115 },
+            { id: 110, name: "ארלינג הולאנד", clubId: "MCI", pos: "ST", ovr: 91, val: 185 },
+            { id: 111, name: "ג'רמי דוקו", clubId: "MCI", pos: "LW", ovr: 84, val: 65 },
+            { id: 112, name: "ג'ק גריליש", clubId: "MCI", pos: "LW", ovr: 84, val: 60 },
+            { id: 113, name: "סאביניו", clubId: "MCI", pos: "RW", ovr: 82, val: 50 },
+            { id: 114, name: "מתאו קובאצ'יץ'", clubId: "MCI", pos: "CM", ovr: 83, val: 35 },
+
+            // REAL MADRID
+            { id: 201, name: "טיבו קורטואה", clubId: "RMA", pos: "GK", ovr: 89, val: 60 },
+            { id: 202, name: "דני קרבחאל", clubId: "RMA", pos: "RB", ovr: 86, val: 30 },
+            { id: 203, name: "אנטוניו רודיגר", clubId: "RMA", pos: "CB", ovr: 87, val: 45 },
+            { id: 204, name: "אדר מיליטאו", clubId: "RMA", pos: "CB", ovr: 85, val: 65 },
+            { id: 205, name: "פרלאן מנדי", clubId: "RMA", pos: "LB", ovr: 82, val: 30 },
+            { id: 206, name: "אורליין טשואמני", clubId: "RMA", pos: "CDM", ovr: 86, val: 80 },
+            { id: 207, name: "פדריקו ואלוורדה", clubId: "RMA", pos: "CM", ovr: 88, val: 105 },
+            { id: 208, name: "ג'וד בלינגהאם", clubId: "RMA", pos: "CAM", ovr: 90, val: 145 },
+            { id: 209, name: "רודריגו", clubId: "RMA", pos: "RW", ovr: 86, val: 90 },
+            { id: 210, name: "קיליאן אמבפה", clubId: "RMA", pos: "ST", ovr: 91, val: 185 },
+            { id: 211, name: "ויניסיוס ג'וניור", clubId: "RMA", pos: "LW", ovr: 90, val: 155 },
+
+            // PSG
+            { id: 301, name: "ג'אנלואיג'י דונארומה", clubId: "PSG", pos: "GK", ovr: 89, val: 65 },
+            { id: 302, name: "אשרף חכימי", clubId: "PSG", pos: "RB", ovr: 85, val: 68 },
+            { id: 303, name: "מרקיניוס", clubId: "PSG", pos: "CB", ovr: 87, val: 50 },
+            { id: 304, name: "וויליאן פאצ'ו", clubId: "PSG", pos: "CB", ovr: 82, val: 40 },
+            { id: 305, name: "נונו מנדש", clubId: "PSG", pos: "LB", ovr: 83, val: 50 },
+            { id: 306, name: "ויטיניה", clubId: "PSG", pos: "CM", ovr: 85, val: 70 },
+            { id: 307, name: "ז'ואאו נבש", clubId: "PSG", pos: "CM", ovr: 83, val: 60 },
+            { id: 308, name: "וורן זאיר-אמרי", clubId: "PSG", pos: "CAM", ovr: 81, val: 55 },
+            { id: 309, name: "עוסמאן דמבלה", clubId: "PSG", pos: "RW", ovr: 86, val: 75 },
+
+            // BARCELONA & OTHERS
+            { id: 401, name: "לאמין ימאל", clubId: "FCB", pos: "RW", ovr: 86, val: 125 },
+            { id: 402, name: "רוברט לבנדובסקי", clubId: "FCB", pos: "ST", ovr: 88, val: 38 },
+            { id: 403, name: "פדרי", clubId: "FCB", pos: "CM", ovr: 86, val: 85 },
+            { id: 407, name: "בוקאיו סאקה", clubId: "ARS", pos: "RW", ovr: 87, val: 110 },
+            { id: 408, name: "מרטין אודגור", clubId: "ARS", pos: "CAM", ovr: 88, val: 95 },
+            { id: 412, name: "הארי קיין", clubId: "BAY", pos: "ST", ovr: 90, val: 95 },
+            { id: 413, name: "ג'מאל מוסיאלה", clubId: "BAY", pos: "CAM", ovr: 88, val: 120 }
+        ];
+
+        function getPosCompatibility(playerPos, targetSlotPos) {
+            if (playerPos === targetSlotPos) return 'pos-perfect';
+            const defs = ['CB', 'RB', 'LB', 'RWB', 'LWB'];
+            const mids = ['CM', 'CDM', 'CAM', 'LM', 'RM'];
+            const atts = ['ST', 'CF', 'RW', 'LW'];
+
+            if (playerPos === 'GK' || targetSlotPos === 'GK') {
+                return (playerPos === 'GK' && targetSlotPos === 'GK') ? 'pos-perfect' : 'pos-wrong';
+            }
+            if ((defs.includes(playerPos) && defs.includes(targetSlotPos)) ||
+                (mids.includes(playerPos) && mids.includes(targetSlotPos)) ||
+                (atts.includes(playerPos) && atts.includes(targetSlotPos))) {
+                return 'pos-secondary';
+            }
+            return 'pos-wrong';
+        }
+
+        function getFormationPosArray(formation) {
+            const map = {
+                '4-3-3': ['GK', 'RB', 'CB', 'CB', 'LB', 'CDM', 'CM', 'CAM', 'LW', 'ST', 'RW'],
+                '4-2-3-1': ['GK', 'RB', 'CB', 'CB', 'LB', 'CDM', 'CDM', 'CAM', 'LM', 'ST', 'RM'],
+                '4-4-2': ['GK', 'RB', 'CB', 'CB', 'LB', 'RM', 'CM', 'CM', 'LM', 'ST', 'ST'],
+                '3-5-2': ['GK', 'CB', 'CB', 'CB', 'RM', 'CM', 'CM', 'LM', 'CAM', 'ST', 'ST']
+            };
+            return map[formation] || map['4-3-3'];
+        }
+
+        function autoSortSquadByPosition() {
+            sfx.playClick();
+            const clubPlayers = gameState.players.filter(p => p.clubId === gameState.userClub.id);
+            const slotPositions = getFormationPosArray(gameState.manager.formation);
+
+            let available = [...clubPlayers];
+            let newXI = [];
+
+            slotPositions.forEach((slotPos) => {
+                let bestIdx = available.findIndex(p => p.pos === slotPos);
+                if (bestIdx === -1) bestIdx = 0;
+                if (available[bestIdx]) {
+                    newXI.push(available[bestIdx]);
+                    available.splice(bestIdx, 1);
+                }
+            });
+
+            const updatedSquad = [...newXI, ...available];
+            let otherClubPlayers = gameState.players.filter(p => p.clubId !== gameState.userClub.id);
+            gameState.players = [...updatedSquad, ...otherClubPlayers];
+
+            renderSquadTab();
+        }
+
+        function changeFormation(newVal) {
+            sfx.playClick();
+            gameState.manager.formation = newVal;
+            renderSquadTab();
+        }
+
+        function selectPitchPlayer(index) {
+            sfx.playClick();
+            gameState.selectedPitchPlayerIndex = index;
+            renderSquadTab();
+        }
+
+        function swapWithPitch(benchIndex) {
+            sfx.playClick();
+            if (gameState.selectedPitchPlayerIndex === null) {
+                alert("אנא בחר שחקן מההרכב הפותח תחילה!");
+                return;
+            }
+
+            const clubPlayers = gameState.players.filter(p => p.clubId === gameState.userClub.id);
+            const p1 = clubPlayers[gameState.selectedPitchPlayerIndex];
+            const p2 = clubPlayers[benchIndex];
+
+            const idx1 = gameState.players.findIndex(p => p.id === p1.id);
+            const idx2 = gameState.players.findIndex(p => p.id === p2.id);
+
+            const temp = gameState.players[idx1];
+            gameState.players[idx1] = gameState.players[idx2];
+            gameState.players[idx2] = temp;
+
+            gameState.selectedPitchPlayerIndex = null;
+            renderSquadTab();
+        }
+
+        function renderSquadTab() {
+            const clubPlayers = gameState.players.filter(p => p.clubId === gameState.userClub.id);
+            document.getElementById('squad-count-badge').innerText = clubPlayers.length;
+
+            const startingEleven = clubPlayers.slice(0, 11);
+            const benchPlayers = clubPlayers.slice(11);
+
+            const avgOvr = startingEleven.length > 0 
+                ? Math.round(startingEleven.reduce((acc, p) => acc + p.ovr, 0) / startingEleven.length) 
+                : 0;
+            document.getElementById('starting-avg-rating').innerText = `דירוג ממוצע: ${avgOvr}`;
+
+            const hint = document.getElementById('swap-status-hint');
+            if (gameState.selectedPitchPlayerIndex !== null && startingEleven[gameState.selectedPitchPlayerIndex]) {
+                const sel = startingEleven[gameState.selectedPitchPlayerIndex];
+                hint.innerHTML = `⚽ נבחר להחלפה: <span class="text-eafc-green">${sel.name} (${sel.pos})</span> - עכשיו לחץ על שחקן בספסל!`;
+            } else {
+                hint.innerHTML = `💡 לחץ על שחקן בהרכב, ואז לחץ על שחקן בספסל כדי לבצע חילוף!`;
+            }
+
+            const slotPositions = getFormationPosArray(gameState.manager.formation);
+            const pitchLayer = document.getElementById('pitch-players-layer');
+
+            pitchLayer.innerHTML = startingEleven.map((p, index) => {
+                const posStyle = getPitchCoordinates(index, gameState.manager.formation);
+                const isSelected = gameState.selectedPitchPlayerIndex === index;
+                const targetSlotPos = slotPositions[index] || p.pos;
+                const compatClass = getPosCompatibility(p.pos, targetSlotPos);
+
+                return `
+                    <div onclick="selectPitchPlayer(${index})" 
+                        class="absolute text-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition duration-200 hover:scale-110 z-20" 
+                        style="top: ${posStyle.top}; left: ${posStyle.left};">
+                        <div class="w-10 h-10 rounded-full ${compatClass} ${isSelected ? 'scale-125 ring-4 ring-yellow-300' : ''} bg-slate-900 font-bold flex items-center justify-center text-xs mx-auto shadow-xl">
+                            <span class="${p.pos === 'GK' ? 'text-amber-400' : 'text-white'}">${p.ovr}</span>
+                        </div>
+                        <span class="text-[10px] bg-black/90 px-2 py-0.5 rounded text-white mt-1 inline-block font-bold border border-gray-700 whitespace-nowrap shadow-md">
+                            ${p.name.split(' ').pop()} <span class="text-eafc-accent">(${targetSlotPos})</span>
+                        </span>
+                    </div>
+                `;
+            }).join('');
+
+            const benchContainer = document.getElementById('squad-bench-list');
+            benchContainer.innerHTML = benchPlayers.map((p, bIndex) => `
+                <div class="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-gray-800 text-xs hover:border-eafc-green transition">
+                    <div>
+                        <p class="font-bold text-white">${p.name}</p>
+                        <p class="text-gray-400 text-[10px]">${p.pos} | שווי: €${p.val}M</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-eafc-green text-sm">${p.ovr}</span>
+                        <button onclick="swapWithPitch(${bIndex + 11})" class="bg-gradient-to-r from-eafc-green to-emerald-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs hover:brightness-110 transition flex items-center gap-1">
+                            <i class="fa-solid fa-right-left"></i> החלף
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            renderUCLTracker();
+            renderJobOffers();
+        }
+
+        function openTransferModal(playerId) {
+            sfx.playClick();
+            const player = gameState.players.find(p => p.id === playerId);
+            if (!player) return;
+
+            gameState.selectedTransferPlayer = player;
+            gameState.negoPatience = 6;
+            updateNegoPatienceUI();
+
+            const oppClub = CLUBS_DATABASE.find(c => c.id === player.clubId);
+            document.getElementById('nego-opp-club').innerText = oppClub ? oppClub.name : 'מועדון רכישה';
+            document.getElementById('nego-user-name').innerText = gameState.manager.name;
+            document.getElementById('offer-fee-input').value = player.val;
+
+            document.getElementById('nego-dialogue-box').innerHTML = `
+                <p class="font-bold text-eafc-accent mb-1">משא ומתן פתוח:</p>
+                <p>"שלום. אנחנו פתוחים למכור את <strong>${player.name}</strong> (${player.pos}, דירוג ${player.ovr}). השווי המוערך שלו עומד על <strong>€${player.val}M</strong>. מה תציע לנו?"</p>
+            `;
+
+            document.getElementById('nego-controls').classList.remove('hidden');
+            document.getElementById('transfer-modal').classList.remove('hidden');
+        }
+
+        function closeTransferModal() {
+            sfx.playClick();
+            document.getElementById('transfer-modal').classList.add('hidden');
+        }
+
+        function updateNegoPatienceUI() {
+            document.getElementById('nego-patience-badge').innerText = `מד סבלנות: ${gameState.negoPatience}/6 ניסיונות`;
+        }
+
+        function submitTransferOffer() {
+            sfx.playClick();
+            const offer = parseFloat(document.getElementById('offer-fee-input').value);
+            const player = gameState.selectedTransferPlayer;
+            const dialogue = document.getElementById('nego-dialogue-box');
+
+            if (isNaN(offer) || offer <= 0) return;
+
+            gameState.negoPatience--;
+            updateNegoPatienceUI();
+
+            if (offer > gameState.userClub.budget) {
+                dialogue.innerHTML = `
+                    <p class="font-bold text-red-400 mb-1">שגיאה בתקציב:</p>
+                    <p>"אין למועדון שלך מספיק תקציב העברות לבצע עסקה זו! תקציבך: €${gameState.userClub.budget}M."</p>
+                `;
+                return;
+            }
+
+            const baseVal = player.val;
+
+            if (offer >= baseVal * 0.90) {
+                player.clubId = gameState.userClub.id;
+                gameState.userClub.budget -= offer;
+
+                dialogue.innerHTML = `
+                    <p class="font-bold text-eafc-green mb-1">העסקה אושרה! 🎉</p>
+                    <p>"הצעה הוגנת ומצויינת. אנחנו מסכימים למכור את <strong>${player.name}</strong> תמורת €${offer}M. השחקן מצטרף לסגל שלך!"</p>
+                `;
+                document.getElementById('nego-controls').classList.add('hidden');
+
+                gameState.news.unshift({
+                    title: `רכש חדש! ${player.name} הצטרף ל${gameState.userClub.name} תמורת €${offer}M!`,
+                    time: 'עכשיו'
+                });
+
+                setTimeout(() => {
+                    closeTransferModal();
+                    updateHeaderUI();
+                    renderSquadTab();
+                    renderTransfersTab();
+                    updateDashboardUI();
+                }, 2000);
+
+            } else if (gameState.negoPatience <= 0) {
+                dialogue.innerHTML = `
+                    <p class="font-bold text-red-500 mb-1">המשא ומתן התפוצץ! ❌</p>
+                    <p>"ההצעות היו נמוכות מדי. העסקה מבוטלת."</p>
+                `;
+                document.getElementById('nego-controls').classList.add('hidden');
+            } else {
+                const currentDiff = baseVal - offer;
+                const counter = Math.round(baseVal - (currentDiff * 0.45));
+
+                dialogue.innerHTML = `
+                    <p class="font-bold text-yellow-400 mb-1">הצעה נגדית מנציג המועדון:</p>
+                    <p>"הצעתכם €${offer}M נמוכה, אך נתפשר על <strong>€${counter}M</strong>. מה דעתך?"</p>
+                `;
+            }
+        }
+
+        function renderTransfersTab() {
+            const marketList = document.getElementById('transfers-market-list');
+            const searchVal = (document.getElementById('transfer-search-input')?.value || "").toLowerCase();
+
+            const available = gameState.players.filter(p => 
+                p.clubId !== gameState.userClub.id && 
+                p.name.toLowerCase().includes(searchVal)
+            );
+
+            marketList.innerHTML = available.map(p => {
+                const club = CLUBS_DATABASE.find(c => c.id === p.clubId);
+                return `
+                    <div class="bg-slate-900/90 p-4 rounded-xl border border-gray-800 flex justify-between items-center hover:border-eafc-accent transition">
+                        <div>
+                            <p class="font-bold text-white text-sm">${p.name}</p>
+                            <p class="text-xs text-gray-400">${p.pos} | ${club ? club.name : 'חופשי'}</p>
+                            <p class="text-xs text-eafc-green font-bold mt-1">שווי: €${p.val}M</p>
+                        </div>
+                        <div class="text-left flex flex-col items-end gap-2">
+                            <span class="font-bold text-lg text-white bg-slate-800 px-2 py-0.5 rounded border border-gray-700">${p.ovr}</span>
+                            <button onclick="openTransferModal(${p.id})" class="bg-eafc-accent text-black font-bold px-3 py-1.5 rounded-lg text-xs hover:brightness-110 transition flex items-center gap-1">
+                                <i class="fa-solid fa-handshake"></i> פתח מו"מ
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStandingsTab() {
+            const tableBody = document.getElementById('league-table-body');
+            const sorted = [...gameState.standings].sort((a,b) => b.pts - a.pts);
+
+            tableBody.innerHTML = sorted.map((row, idx) => `
+                <tr class="hover:bg-slate-900/50 ${row.id === gameState.userClub.id ? 'bg-eafc-green/10 font-bold border-r-4 border-eafc-green' : ''}">
+                    <td class="py-3 px-2">${idx + 1}</td>
+                    <td class="py-3 px-2 flex items-center gap-2">
+                        <span>${row.name}</span>
+                    </td>
+                    <td class="py-3 px-2 text-center text-gray-400">${row.played}</td>
+                    <td class="py-3 px-2 text-center text-gray-400">${row.won}</td>
+                    <td class="py-3 px-2 text-center text-gray-400">${row.drawn}</td>
+                    <td class="py-3 px-2 text-center text-gray-400">${row.lost}</td>
+                    <td class="py-3 px-2 text-center font-bold text-eafc-green">${row.pts}</td>
+                </tr>
+            `).join('');
+        }
+
+        function playMatchSimulator() {
+            quickSimulateMatch();
+        }
+
+        function quickSimulateMatch() {
+            sfx.playWhistle();
+            gameState.scheduleWeek++;
+
+            // Update match scores
+            const userWon = Math.random() > 0.35;
+            const userGoals = userWon ? Math.floor(Math.random() * 3) + 1 : Math.floor(Math.random() * 2);
+            const oppGoals = userWon ? Math.floor(Math.random() * userGoals) : Math.floor(Math.random() * 3) + 1;
+
+            const userEntry = gameState.standings.find(s => s.id === gameState.userClub.id);
+            if (userEntry) {
+                userEntry.played++;
+                if (userGoals > oppGoals) { userEntry.won++; userEntry.pts += 3; sfx.playGoal(); }
+                else if (userGoals === oppGoals) { userEntry.drawn++; userEntry.pts += 1; }
+                else { userEntry.lost++; }
+            }
+
+            // Simulate CPU clubs
+            gameState.standings.forEach(s => {
+                if (s.id !== gameState.userClub.id) {
+                    s.played++;
+                    const res = Math.random();
+                    if (res > 0.5) { s.won++; s.pts += 3; }
+                    else if (res > 0.25) { s.drawn++; s.pts += 1; }
+                    else { s.lost++; }
+                }
+            });
+
+            // Advance Champions League Knockouts
+            if (gameState.scheduleWeek === 3) gameState.uclStage = "Semi";
+            if (gameState.scheduleWeek === 5) gameState.uclStage = "Final";
+            if (gameState.scheduleWeek === 6) {
+                gameState.uclStage = "Won";
+                triggerTrophyCelebration();
+            }
+
+            gameState.news.unshift({
+                title: `תוצאת מחזור ${gameState.scheduleWeek - 1}: ${gameState.userClub.name} ${userGoals} - ${oppGoals} יריבה`,
+                time: `מחזור ${gameState.scheduleWeek - 1}`
+            });
+
+            checkForIncomingTransferOffers();
+            updateHeaderUI();
+            updateDashboardUI();
+            renderStandingsTab();
+        }
+
+        function checkForIncomingTransferOffers() {
+            if (gameState.scheduleWeek % 2 === 0 && Math.random() > 0.4) {
+                const userPlayers = gameState.players.filter(p => p.clubId === gameState.userClub.id);
+                if (userPlayers.length === 0) return;
+
+                const targetPlayer = userPlayers[Math.floor(Math.random() * userPlayers.length)];
+                const otherClubs = CLUBS_DATABASE.filter(c => c.id !== gameState.userClub.id);
+                const buyerClub = otherClubs[Math.floor(Math.random() * otherClubs.length)];
+
+                const offerFee = Math.round(targetPlayer.val * (1.1 + Math.random() * 0.25));
+
+                gameState.incomingOffer = { player: targetPlayer, buyer: buyerClub, fee: offerFee };
+
+                document.getElementById('incoming-buyer-name').innerText = buyerClub.name;
+                document.getElementById('incoming-player-name').innerText = targetPlayer.name;
+                document.getElementById('incoming-player-info').innerText = `${targetPlayer.pos} | OVR: ${targetPlayer.ovr}`;
+                document.getElementById('incoming-offer-fee').innerText = `€${offerFee}M`;
+
+                document.getElementById('incoming-offer-modal').classList.remove('hidden');
+            }
+        }
+
+        function acceptIncomingOffer() {
+            sfx.playClick();
+            if (!gameState.incomingOffer) return;
+
+            const { player, buyer, fee } = gameState.incomingOffer;
+            player.clubId = buyer.id;
+            gameState.userClub.budget += fee;
+
+            gameState.news.unshift({
+                title: `עסקה בוצעה! ${player.name} נמכר ל-${buyer.name} תמורת €${fee}M!`,
+                time: `מחזור ${gameState.scheduleWeek}`
+            });
+
+            document.getElementById('incoming-offer-modal').classList.add('hidden');
+            gameState.incomingOffer = null;
+
+            updateHeaderUI();
+            renderSquadTab();
+            updateDashboardUI();
+        }
+
+        function rejectIncomingOffer() {
+            sfx.playClick();
+            document.getElementById('incoming-offer-modal').classList.add('hidden');
+            gameState.incomingOffer = null;
+        }
+
+        function renderUCLTracker() {
+            document.getElementById('ucl-stage-badge').innerText = 
+                gameState.uclStage === 'Quarter' ? 'רבע גמר' :
+                gameState.uclStage === 'Semi' ? 'חצי גמר' :
+                gameState.uclStage === 'Final' ? 'גמר הטורניר' : 'אלופים!';
+
+            document.getElementById('ucl-qf-match').innerText = `${gameState.userClub ? gameState.userClub.name : 'מועדון'} vs ${gameState.uclOpponents.qf}`;
+            document.getElementById('ucl-sf-match').innerText = gameState.uclStage !== 'Quarter' ? `${gameState.userClub.name} vs ${gameState.uclOpponents.sf}` : 'ממתין לעולה לרבע גמר';
+            document.getElementById('ucl-final-match').innerText = (gameState.uclStage === 'Final' || gameState.uclStage === 'Won') ? `${gameState.userClub.name} vs ${gameState.uclOpponents.final}` : 'ממתין לפינאליסטיות';
+        }
+
+        function renderJobOffers() {
+            const container = document.getElementById('job-offers-container');
+            if (gameState.scheduleWeek >= 3 && gameState.jobOffers.length === 0) {
+                gameState.jobOffers = [
+                    { team: "נבחרת ברזיל 🇧🇷", type: "national" },
+                    { team: "באיירן מינכן", type: "club" }
+                ];
+            }
+
+            if (gameState.jobOffers.length > 0) {
+                container.innerHTML = gameState.jobOffers.map((offer, i) => `
+                    <div class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-yellow-500/30">
+                        <span>הצעה מ-<strong>${offer.team}</strong></span>
+                        <button onclick="acceptJobOffer(${i})" class="bg-yellow-400 text-black font-bold px-2.5 py-1 rounded text-[10px] hover:brightness-110">
+                            קבל הצעה
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function acceptJobOffer(index) {
+            sfx.playClick();
+            const offer = gameState.jobOffers[index];
+            alert(`ברכות! קיבלת את עבודת האימון החדשה ב-${offer.team}!`);
+            gameState.jobOffers.splice(index, 1);
+            renderJobOffers();
+        }
+
+        function triggerTrophyCelebration() {
+            sfx.playGoal();
+            document.getElementById('trophy-team-name').innerText = gameState.userClub.name;
+            document.getElementById('trophy-modal').classList.remove('hidden');
+        }
+
+        function closeTrophyModal() {
+            document.getElementById('trophy-modal').classList.add('hidden');
+        }
+
+        function initApp() {
+            const clubContainer = document.getElementById('club-selection-list');
+            clubContainer.innerHTML = CLUBS_DATABASE.map(club => `
+                <div onclick="selectClub('${club.id}')" id="club-card-${club.id}" class="club-card border border-gray-800 bg-slate-900/60 p-4 rounded-xl cursor-pointer hover:border-eafc-green transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-teko text-2xl font-bold text-white">${club.name}</span>
+                        <span class="text-xs bg-eafc-green/10 text-eafc-green border border-eafc-green/30 px-2 py-0.5 rounded font-bold">דירוג: ${club.rating}</span>
+                    </div>
+                    <div class="text-xs text-gray-400">
+                        תקציב העברות: <span class="text-white font-bold">€${club.budget}M</span>
+                    </div>
+                </div>
+            `).join('');
+
+            selectClub(CLUBS_DATABASE[0].id);
+        }
+
+        function selectClub(clubId) {
+            sfx.playClick();
+            gameState.manager.clubId = clubId;
+            document.querySelectorAll('.club-card').forEach(card => card.classList.remove('border-eafc-green', 'bg-slate-800'));
+            const selected = document.getElementById(`club-card-${clubId}`);
+            if (selected) {
+                selected.classList.add('border-eafc-green', 'bg-slate-800');
+            }
+        }
+
+        function startCareer() {
+            sfx.playWhistle();
+            const managerName = document.getElementById('input-manager-name').value || "פפ גווארדיולה";
+            const managerCountry = document.getElementById('input-manager-country').value;
+            const tacticalStyle = document.getElementById('input-tactical-style').value;
+            const formation = document.getElementById('input-formation').value;
+
+            gameState.manager.name = managerName;
+            gameState.manager.country = managerCountry;
+            gameState.manager.tacticalStyle = tacticalStyle;
+            gameState.manager.formation = formation;
+
+            gameState.userClub = CLUBS_DATABASE.find(c => c.id === gameState.manager.clubId) || CLUBS_DATABASE[0];
+            gameState.players = JSON.parse(JSON.stringify(PLAYERS_DATABASE));
+
+            gameState.standings = CLUBS_DATABASE.map(c => ({
+                id: c.id,
+                name: c.name,
+                played: 0,
+                won: 0,
+                drawn: 0,
+                lost: 0,
+                pts: 0
+            }));
+
+            gameState.news = [
+                { title: `ברוך הבא! ${managerName} מונה למאמן הראשי של ${gameState.userClub.name}!`, time: 'עכשיו' },
+                { title: `חלון העברות נפתח! תקציב רכש עומד על €${gameState.userClub.budget}M.`, time: 'עכשיו' }
+            ];
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('career-hub').classList.remove('hidden');
+
+            autoSortSquadByPosition();
+            updateHeaderUI();
+            updateDashboardUI();
+            renderSquadTab();
+            renderTransfersTab();
+            renderStandingsTab();
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('header-club-name').innerText = gameState.userClub.name;
+            document.getElementById('header-budget').innerText = `€${gameState.userClub.budget}M`;
+            document.getElementById('header-season-week').innerText = `מחזור ${gameState.scheduleWeek}`;
+            document.getElementById('header-manager-name').innerText = gameState.manager.name;
+            document.getElementById('header-manager-country').innerText = gameState.manager.country;
+            document.getElementById('top-stats-bar').classList.remove('hidden');
+        }
+
+        function updateDashboardUI() {
+            const nextOpponent = CLUBS_DATABASE.find(c => c.id !== gameState.userClub.id) || CLUBS_DATABASE[1];
+            document.getElementById('next-home-name').innerText = gameState.userClub.name;
+            document.getElementById('next-home-logo').innerText = gameState.userClub.name.substring(0, 3).toUpperCase();
+            document.getElementById('next-away-name').innerText = nextOpponent.name;
+            document.getElementById('next-away-logo').innerText = nextOpponent.name.substring(0, 3).toUpperCase();
+            document.getElementById('next-match-competition').innerText = `ליגה ראשונה - מחזור ${gameState.scheduleWeek}`;
+
+            const newsContainer = document.getElementById('news-feed');
+            newsContainer.innerHTML = gameState.news.map(item => `
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-gray-800 text-xs flex justify-between items-center">
+                    <span class="text-gray-200">${item.title}</span>
+                    <span class="text-[10px] text-eafc-accent">${item.time}</span>
+                </div>
+            `).join('');
+
+            const userPlayers = gameState.players.filter(p => p.clubId === gameState.userClub.id).sort((a,b) => b.ovr - a.ovr);
+            const topStarsContainer = document.getElementById('top-stars-list');
+            topStarsContainer.innerHTML = userPlayers.slice(0, 4).map(p => `
+                <div class="flex items-center justify-between bg-slate-900 p-2.5 rounded-lg border border-gray-800 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-eafc-green text-black font-bold px-2 py-0.5 rounded text-[10px]">${p.pos}</span>
+                        <span class="font-bold text-white">${p.name}</span>
+                    </div>
+                    <span class="font-bold text-eafc-green">${p.ovr} OVR</span>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tabId) {
+            sfx.playClick();
+            const tabs = ['tab-overview', 'tab-squad', 'tab-transfers', 'tab-standings'];
+            tabs.forEach(t => {
+                const el = document.getElementById(t);
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (el) el.classList.add('hidden');
+                if (navBtn) {
+                    navBtn.classList.remove('tab-active');
+                    navBtn.classList.add('text-gray-400');
+                }
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('tab-active');
+                activeNav.classList.remove('text-gray-400');
+            }
+
+            if (tabId === 'tab-squad') renderSquadTab();
+            if (tabId === 'tab-transfers') renderTransfersTab();
+            if (tabId === 'tab-standings') renderStandingsTab();
+        }
+
+        function getPitchCoordinates(index, formation) {
+            if (index === 0) return { top: '85%', left: '50%' };
+
+            const map = {
+                '4-3-3': [
+                    { top: '68%', left: '18%' }, { top: '70%', left: '38%' }, { top: '70%', left: '62%' }, { top: '68%', left: '82%' },
+                    { top: '48%', left: '30%' }, { top: '50%', left: '50%' }, { top: '48%', left: '70%' },
+                    { top: '22%', left: '22%' }, { top: '18%', left: '50%' }, { top: '22%', left: '78%' }
+                ],
+                '4-2-3-1': [
+                    { top: '68%', left: '18%' }, { top: '70%', left: '38%' }, { top: '70%', left: '62%' }, { top: '68%', left: '82%' },
+                    { top: '52%', left: '35%' }, { top: '52%', left: '65%' },
+                    { top: '35%', left: '20%' }, { top: '33%', left: '50%' }, { top: '35%', left: '80%' },
+                    { top: '18%', left: '50%' }
+                ],
+                '4-4-2': [
+                    { top: '68%', left: '18%' }, { top: '70%', left: '38%' }, { top: '70%', left: '62%' }, { top: '68%', left: '82%' },
+                    { top: '45%', left: '15%' }, { top: '48%', left: '38%' }, { top: '48%', left: '62%' }, { top: '45%', left: '85%' },
+                    { top: '20%', left: '35%' }, { top: '20%', left: '65%' }
+                ],
+                '3-5-2': [
+                    { top: '70%', left: '25%' }, { top: '72%', left: '50%' }, { top: '70%', left: '75%' },
+                    { top: '48%', left: '15%' }, { top: '52%', left: '35%' }, { top: '52%', left: '65%' }, { top: '48%', left: '85%' },
+                    { top: '33%', left: '50%' },
+                    { top: '18%', left: '35%' }, { top: '18%', left: '65%' }
+                ]
+            };
+
+            const coords = map[formation] || map['4-3-3'];
+            return coords[index - 1] || { top: '50%', left: '50%' };
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
